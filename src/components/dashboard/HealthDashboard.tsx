@@ -3,6 +3,9 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import DailyOverview from "@/components/dashboard/DailyOverview";
+import HealthConnectConnectionPanel from "@/components/health-connect/HealthConnectConnectionPanel";
+import HealthConnectSummaryPanel from "@/components/health-connect/HealthConnectSummaryPanel";
+import HealthConnectWritePanel from "@/components/health-connect/HealthConnectWritePanel";
 import MobileNavigation from "@/components/navigation/MobileNavigation";
 import BarcodeScanner from "@/components/scanner/BarcodeScanner";
 import ProductLookup from "@/components/scanner/ProductLookup";
@@ -316,6 +319,12 @@ export default function HealthDashboard() {
           }))
         }
       />
+
+      <HealthConnectConnectionPanel />
+
+      <HealthConnectSummaryPanel />
+
+      <HealthConnectWritePanel />
 
       <div className="workspace-section-heading">
         <div>

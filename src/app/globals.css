@@ -1928,3 +1928,343 @@ input::placeholder {
   background-color: #17304d;
   color: #ffffff;
 }
+
+/* Phase 5E: Health Connect connection status */
+.health-connect-panel {
+  margin: 1.5rem 0;
+  padding: 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.health-connect-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.health-connect-heading h2 {
+  margin: 0.2rem 0 0;
+}
+
+.health-connect-description {
+  max-width: 760px;
+  margin: 0.85rem 0 1.1rem;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.health-connect-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  padding: 0.35rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.health-connect-badge.success {
+  background: rgba(36, 148, 96, 0.12);
+  color: #176a46;
+}
+
+.health-connect-badge.warning {
+  background: rgba(194, 122, 20, 0.13);
+  color: #8a540d;
+}
+
+.health-connect-badge.neutral {
+  background: var(--surface-muted);
+  color: var(--muted);
+}
+
+.health-connect-status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.health-connect-status-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-muted);
+}
+
+.health-connect-status-grid span,
+.health-connect-status-grid small {
+  color: var(--muted);
+}
+
+.health-connect-status-grid strong {
+  font-size: 1rem;
+}
+
+.health-connect-status-grid small {
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.health-connect-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.health-connect-message {
+  margin: 0.9rem 0 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .health-connect-heading {
+    flex-direction: column;
+  }
+
+  .health-connect-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-connect-actions > button {
+    width: 100%;
+  }
+}
+
+/* Phase 5E-C: explicit Health Connect aggregate summary */
+.health-connect-summary-panel {
+  margin: 1.5rem 0;
+  padding: 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.health-connect-summary-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.health-connect-summary-heading h2 {
+  margin: 0.2rem 0 0.45rem;
+}
+
+.health-connect-summary-heading p:last-child {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.health-connect-range-field {
+  min-width: 130px;
+}
+
+.health-connect-summary-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.health-connect-summary-actions small,
+.health-connect-summary-range {
+  color: var(--muted);
+}
+
+.health-connect-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    5,
+    minmax(0, 1fr)
+  );
+  gap: 0.85rem;
+  margin-top: 1.1rem;
+}
+
+.health-connect-summary-grid article {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-muted);
+}
+
+.health-connect-summary-grid span,
+.health-connect-summary-grid small {
+  color: var(--muted);
+}
+
+.health-connect-summary-grid strong {
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.health-connect-summary-grid small {
+  line-height: 1.45;
+}
+
+.health-connect-summary-range {
+  margin: 0.9rem 0 0;
+  font-size: 0.85rem;
+}
+
+.health-connect-summary-empty {
+  margin-top: 1.1rem;
+  padding: 1rem;
+  border: 1px dashed var(--border);
+  border-radius: 1rem;
+  background: var(--surface-muted);
+}
+
+.health-connect-summary-empty p {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+}
+
+@media (max-width: 1100px) {
+  .health-connect-summary-grid {
+    grid-template-columns: repeat(
+      2,
+      minmax(0, 1fr)
+    );
+  }
+}
+
+@media (max-width: 760px) {
+  .health-connect-summary-heading {
+    flex-direction: column;
+  }
+
+  .health-connect-range-field {
+    width: 100%;
+  }
+
+  .health-connect-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-connect-summary-actions {
+    align-items: stretch;
+  }
+
+  .health-connect-summary-actions > button {
+    width: 100%;
+  }
+}
+
+/* Phase 5E-D: controlled Health Connect writes */
+.health-connect-write-panel {
+  margin: 1.5rem 0;
+  padding: 1.35rem;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.health-connect-write-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.health-connect-write-heading h2 {
+  margin: 0.2rem 0 0.45rem;
+}
+
+.health-connect-write-heading p:last-child {
+  max-width: 720px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.health-connect-write-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 1rem;
+  margin-top: 1.1rem;
+}
+
+.health-connect-write-card {
+  display: grid;
+  align-content: start;
+  gap: 1rem;
+  padding: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface-muted);
+}
+
+.health-connect-write-card h3 {
+  margin: 0.2rem 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.health-connect-write-card > div > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.health-connect-write-card textarea {
+  resize: vertical;
+}
+
+.health-connect-time-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    2,
+    minmax(0, 1fr)
+  );
+  gap: 0.75rem;
+}
+
+.health-connect-write-guardrail {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .health-connect-write-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .health-connect-write-heading {
+    flex-direction: column;
+  }
+
+  .health-connect-time-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .health-connect-write-card > button {
+    width: 100%;
+  }
+}
