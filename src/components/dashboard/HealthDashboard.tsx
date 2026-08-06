@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import DailyOverview from "@/components/dashboard/DailyOverview";
 import MobileNavigation from "@/components/navigation/MobileNavigation";
 import BarcodeScanner from "@/components/scanner/BarcodeScanner";
+import ProductLookup from "@/components/scanner/ProductLookup";
 import ApplicationTopBar from "@/components/shell/ApplicationTopBar";
 import DesktopNavigation from "@/components/shell/DesktopNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
@@ -13,6 +14,7 @@ import type {
   MealItem,
   MealType,
 } from "@/types/health";
+import type { ScannedProduct } from "@/types/product";
 
 const STORAGE_KEY = "healthsprint-ai-state-v1";
 
@@ -48,6 +50,8 @@ export default function HealthDashboard() {
   >(new Set());
 
   const [scannedBarcode, setScannedBarcode] = useState("");
+  const [scannedProduct, setScannedProduct] =
+    useState<ScannedProduct | null>(null);
   const [customMealName, setCustomMealName] = useState("");
   const [customMealType, setCustomMealType] =
     useState<MealType>("Breakfast");
@@ -566,8 +570,16 @@ export default function HealthDashboard() {
       />
 
       {scannedBarcode && (
+        <ProductLookup
+          barcode={scannedBarcode}
+          onProductResolved={setScannedProduct}
+        />
+      )}
+
+      {scannedProduct && (
         <p className="captured-barcode-status" role="status">
-          Captured barcode: <strong>{scannedBarcode}</strong>
+          Product resolved:{" "}
+          <strong>{scannedProduct.name}</strong>
         </p>
       )}
 
