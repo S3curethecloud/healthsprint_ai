@@ -1,5 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import ServiceWorkerRegistration from "@/components/pwa/ServiceWorkerRegistration";
 
 import "./globals.css";
 
@@ -14,9 +16,47 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "HealthSprint AI",
+  title: {
+    default: "HealthSprint AI",
+    template: "%s | HealthSprint AI",
+  },
   description:
     "A 45-day calorie, nutrition, exercise, hydration, and progress tracker.",
+  applicationName: "HealthSprint AI",
+  manifest: "/manifest.webmanifest",
+  icons: {
+    icon: [
+      {
+        url: "/healthsprint-icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/healthsprint-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: {
+      url: "/healthsprint-icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+    },
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "HealthSprint",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  viewportFit: "cover",
+  themeColor: "#07111f",
+  colorScheme: "dark",
 };
 
 export default function RootLayout({
@@ -29,6 +69,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable}`}
       >
+        <ServiceWorkerRegistration />
         {children}
       </body>
     </html>

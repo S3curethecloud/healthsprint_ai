@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import MobileNavigation from "@/components/navigation/MobileNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
 import type {
   HealthSprintState,
@@ -38,6 +39,9 @@ function round(value: number) {
 export default function HealthDashboard() {
   const [state, setState] = useState<HealthSprintState>(defaultState);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [collapsedMealTypes, setCollapsedMealTypes] = useState<
+    Set<MealType>
+  >(new Set());
 
   const [customMealName, setCustomMealName] = useState("");
   const [customMealType, setCustomMealType] =
@@ -121,6 +125,20 @@ export default function HealthDashboard() {
     (state.metrics.steps / dayOneWorkout.stepTarget) * 100,
   );
 
+  function toggleMealGroup(mealType: MealType) {
+    setCollapsedMealTypes((current) => {
+      const updated = new Set(current);
+
+      if (updated.has(mealType)) {
+        updated.delete(mealType);
+      } else {
+        updated.add(mealType);
+      }
+
+      return updated;
+    });
+  }
+
   function toggleMeal(mealId: string) {
     setState((current) => {
       const selected = current.selectedMealIds.includes(mealId);
@@ -195,7 +213,7 @@ export default function HealthDashboard() {
 
   if (!isLoaded) {
     return (
-      <main className="app-shell">
+      <main className="app-shell" id="dashboard">
         <div className="loading-card">Loading HealthSprint AI...</div>
       </main>
     );
@@ -220,7 +238,26 @@ export default function HealthDashboard() {
         </div>
       </header>
 
-      <section className="progress-card">
+      <section className="mobile-daily-summary" aria-label="Daily calorie summary">
+        <div>
+          <span>Consumed</span>
+          <strong>{round(totals.calories)} kcal</strong>
+        </div>
+
+        <div>
+          <span>Remaining</span>
+          <strong className={caloriesRemaining < 0 ? "danger" : ""}>
+            {round(caloriesRemaining)} kcal
+          </strong>
+        </div>
+
+        <div>
+          <span>Day</span>
+          <strong>{state.currentDay}/45</strong>
+        </div>
+      </section>
+
+      <section className="progress-card" id="progress">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Program progress</p>
@@ -301,7 +338,7 @@ export default function HealthDashboard() {
       </section>
 
       <section className="content-grid">
-        <div className="panel meal-panel">
+        <div className="panel meal-panel" id="meals">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Today&apos;s nutrition</p>
@@ -336,46 +373,87 @@ export default function HealthDashboard() {
           </p>
 
           <div className="meal-groups">
-            {mealTypes.map((mealType) => (
-              <section className="meal-group" key={mealType}>
-                <h3>{mealType}</h3>
+            {mealTypes.map((mealType) => {
+              const mealsForType = allMeals.filter(
+                (meal) => meal.mealType === mealType,
+              );
 
-                {allMeals
-                  .filter((meal) => meal.mealType === mealType)
-                  .map((meal) => {
-                    const selected =
-                      state.selectedMealIds.includes(meal.id);
+              const selectedCount = mealsForType.filter((meal) =>
+                state.selectedMealIds.includes(meal.id),
+              ).length;
 
-                    return (
-                      <label
-                        className={`meal-item ${
-                          selected ? "selected" : ""
-                        }`}
-                        key={meal.id}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onChange={() => toggleMeal(meal.id)}
-                        />
+              const isCollapsed = collapsedMealTypes.has(mealType);
+              const groupId = `meal-group-${mealType.toLowerCase()}`;
 
-                        <span className="meal-copy">
-                          <strong>{meal.name}</strong>
-                          <small>
-                            {meal.calories} kcal · {meal.protein}g
-                            protein · {meal.carbohydrates}g carbs ·{" "}
-                            {meal.fat}g fat
-                          </small>
-                        </span>
-                      </label>
-                    );
-                  })}
-              </section>
-            ))}
+              return (
+                <section className="meal-group" key={mealType}>
+                  <button
+                    type="button"
+                    className="meal-group-toggle"
+                    aria-expanded={!isCollapsed}
+                    aria-controls={groupId}
+                    onClick={() => toggleMealGroup(mealType)}
+                  >
+                    <span>
+                      <strong>{mealType}</strong>
+                      <small>
+                        {selectedCount} of {mealsForType.length} logged
+                      </small>
+                    </span>
+
+                    <span
+                      className={`meal-group-chevron ${
+                        isCollapsed ? "collapsed" : ""
+                      }`}
+                      aria-hidden="true"
+                    >
+                      ⌄
+                    </span>
+                  </button>
+
+                  <div
+                    id={groupId}
+                    className={`meal-group-content ${
+                      isCollapsed ? "collapsed" : ""
+                    }`}
+                    hidden={isCollapsed}
+                  >
+                    {mealsForType.map((meal) => {
+                      const selected =
+                        state.selectedMealIds.includes(meal.id);
+
+                      return (
+                        <label
+                          className={`meal-item ${
+                            selected ? "selected" : ""
+                          }`}
+                          key={meal.id}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggleMeal(meal.id)}
+                          />
+
+                          <span className="meal-copy">
+                            <strong>{meal.name}</strong>
+                            <small>
+                              {meal.calories} kcal · {meal.protein}g
+                              protein · {meal.carbohydrates}g carbs ·{" "}
+                              {meal.fat}g fat
+                            </small>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </div>
 
-        <aside className="side-column">
+        <aside className="side-column" id="activity">
           <section className="panel">
             <p className="eyebrow">Movement</p>
             <h2>{dayOneWorkout.title}</h2>
@@ -639,6 +717,8 @@ export default function HealthDashboard() {
           Reset today
         </button>
       </section>
+
+      <MobileNavigation />
     </main>
   );
 }
