@@ -1,4 +1,4 @@
-<resources xmlns:tools="http://schemas.android.com/tools">
+<resources>
 
     <style
         name="Theme.HealthSprintAI"
@@ -13,6 +13,7 @@
             @color/healthsprint_background
         </item>
         <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="android:colorAccent">
             @color/healthsprint_primary
         </item>
