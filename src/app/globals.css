@@ -627,20 +627,7 @@ input::placeholder {
     backdrop-filter: blur(22px);
   }
 
-  .mobile-navigation a {
-    display: grid;
-    justify-items: center;
-    gap: 4px;
-    padding: 11px 4px 9px;
-    color: var(--text-muted);
-    text-decoration: none;
-  }
 
-  .mobile-navigation a:hover,
-  .mobile-navigation a:focus-visible {
-    background: var(--primary-soft);
-    color: var(--primary);
-  }
 
   .mobile-navigation span {
     font-size: 1.15rem;
@@ -650,4 +637,208 @@ input::placeholder {
     font-size: 0.68rem;
     font-weight: 700;
   }
+}
+
+.connectivity-banner {
+  position: sticky;
+  z-index: 60;
+  top: max(8px, env(safe-area-inset-top));
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 12px 16px;
+  border: 1px solid rgba(245, 174, 66, 0.55);
+  border-radius: 16px;
+  background: rgba(48, 35, 18, 0.96);
+  color: #ffd89e;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+
+.connectivity-banner > span {
+  color: var(--warning);
+}
+
+.connectivity-banner div {
+  display: grid;
+  gap: 2px;
+}
+
+.connectivity-banner small {
+  color: #d7bd96;
+}
+
+.meal-group-toggle {
+  display: flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  padding: 4px 0 10px;
+  text-align: left;
+}
+
+.meal-group-toggle > span:first-child {
+  display: grid;
+  gap: 3px;
+}
+
+.meal-group-toggle strong {
+  font-size: 1rem;
+}
+
+.meal-group-toggle small {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+}
+
+.meal-group-chevron {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--primary);
+  font-size: 1.1rem;
+  transition: transform 180ms ease;
+}
+
+.meal-group-chevron.collapsed {
+  transform: rotate(-90deg);
+}
+
+.meal-group-content {
+  display: grid;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    opacity 180ms ease,
+    grid-template-rows 180ms ease;
+}
+
+.meal-group-content.collapsed {
+  display: none;
+}
+
+.install-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 18px;
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(53, 214, 231, 0.35);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      135deg,
+      rgba(53, 214, 231, 0.08),
+      rgba(139, 92, 246, 0.08)
+    ),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.install-card img {
+  border-radius: 14px;
+}
+
+.install-card h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.install-card p:last-child {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.install-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.mobile-navigation button {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 4px;
+  border: 0;
+  background: transparent;
+  color: var(--text-muted);
+  padding: 11px 4px 9px;
+}
+
+.mobile-navigation button.active {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.mobile-navigation button:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: -3px;
+}
+
+.mobile-navigation button span {
+  font-size: 1.15rem;
+}
+
+.mobile-navigation button small {
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+@media (max-width: 680px) {
+  .meal-group {
+    scroll-margin-top: 108px;
+  }
+
+  #dashboard,
+  #progress,
+  #meals,
+  #activity {
+    scroll-margin-top: 108px;
+  }
+
+  .install-card {
+    grid-template-columns: auto minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .install-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .install-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 390px) {
+  .install-card {
+    grid-template-columns: 1fr;
+  }
+
+  .install-card img {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+.dashboard-anchor {
+  position: absolute;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
 }

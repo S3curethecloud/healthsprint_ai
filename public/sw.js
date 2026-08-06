@@ -1,5 +1,9 @@
-const CACHE_NAME = "healthsprint-ai-shell-v2";
-const APP_SHELL = ["/", "/manifest.webmanifest", "/healthsprint-icon.svg"];
+const CACHE_NAME = "healthsprint-ai-shell-v4";
+const APP_SHELL = [
+  "/",
+  "/manifest.webmanifest",
+  "/healthsprint-icon.svg",
+];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -41,46 +45,101 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+async function networkFirst(request) {
+  const cache = await caches.open(CACHE_NAME);
+
+  try {
+    const response = await fetch(request);
+
+    if (response.ok) {
+      await cache.put(request, response.clone());
+    }
+
+    return response;
+  } catch {
+    const cachedResponse = await cache.match(request, {
+      ignoreSearch: true,
+    });
+
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+
+    const shellResponse =
+      (await cache.match("/", { ignoreSearch: true })) ||
+      (await caches.match("/", { ignoreSearch: true }));
+
+    if (shellResponse) {
+      return shellResponse;
+    }
+
+    return new Response("HealthSprint AI is currently offline.", {
+      status: 503,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
+  }
+}
+
+async function staleWhileRevalidate(request) {
+  const cache = await caches.open(CACHE_NAME);
+  const cachedResponse = await cache.match(request);
+
+  const networkResponse = fetch(request)
+    .then(async (response) => {
+      if (response.ok) {
+        await cache.put(request, response.clone());
+      }
+
+      return response;
+    })
+    .catch(() => null);
+
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const response = await networkResponse;
+
+  if (response) {
+    return response;
+  }
+
+  return new Response("Resource unavailable while offline.", {
+    status: 503,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+    },
+  });
+}
+
 self.addEventListener("fetch", (event) => {
   const request = event.request;
+  const url = new URL(request.url);
 
-  if (request.method !== "GET") {
+  if (
+    request.method !== "GET" ||
+    url.origin !== self.location.origin
+  ) {
     return;
   }
 
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (
-          response.ok &&
-          new URL(request.url).origin === self.location.origin
-        ) {
-          const responseClone = response.clone();
+  if (request.mode === "navigate") {
+    event.respondWith(networkFirst(request));
+    return;
+  }
 
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
-          });
-        }
+  if (
+    request.destination === "script" ||
+    request.destination === "style" ||
+    request.destination === "font" ||
+    request.destination === "image" ||
+    url.pathname.startsWith("/_next/static/")
+  ) {
+    event.respondWith(staleWhileRevalidate(request));
+    return;
+  }
 
-        return response;
-      })
-      .catch(async () => {
-        const cachedResponse = await caches.match(request);
-
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        if (request.mode === "navigate") {
-          return caches.match("/");
-        }
-
-        return new Response("Offline", {
-          status: 503,
-          headers: {
-            "Content-Type": "text/plain",
-          },
-        });
-      }),
-  );
+  event.respondWith(networkFirst(request));
 });

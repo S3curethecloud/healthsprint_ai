@@ -39,6 +39,9 @@ function round(value: number) {
 export default function HealthDashboard() {
   const [state, setState] = useState<HealthSprintState>(defaultState);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [collapsedMealTypes, setCollapsedMealTypes] = useState<
+    Set<MealType>
+  >(new Set());
 
   const [customMealName, setCustomMealName] = useState("");
   const [customMealType, setCustomMealType] =
@@ -121,6 +124,20 @@ export default function HealthDashboard() {
     100,
     (state.metrics.steps / dayOneWorkout.stepTarget) * 100,
   );
+
+  function toggleMealGroup(mealType: MealType) {
+    setCollapsedMealTypes((current) => {
+      const updated = new Set(current);
+
+      if (updated.has(mealType)) {
+        updated.delete(mealType);
+      } else {
+        updated.add(mealType);
+      }
+
+      return updated;
+    });
+  }
 
   function toggleMeal(mealId: string) {
     setState((current) => {
@@ -356,42 +373,83 @@ export default function HealthDashboard() {
           </p>
 
           <div className="meal-groups">
-            {mealTypes.map((mealType) => (
-              <section className="meal-group" key={mealType}>
-                <h3>{mealType}</h3>
+            {mealTypes.map((mealType) => {
+              const mealsForType = allMeals.filter(
+                (meal) => meal.mealType === mealType,
+              );
 
-                {allMeals
-                  .filter((meal) => meal.mealType === mealType)
-                  .map((meal) => {
-                    const selected =
-                      state.selectedMealIds.includes(meal.id);
+              const selectedCount = mealsForType.filter((meal) =>
+                state.selectedMealIds.includes(meal.id),
+              ).length;
 
-                    return (
-                      <label
-                        className={`meal-item ${
-                          selected ? "selected" : ""
-                        }`}
-                        key={meal.id}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selected}
-                          onChange={() => toggleMeal(meal.id)}
-                        />
+              const isCollapsed = collapsedMealTypes.has(mealType);
+              const groupId = `meal-group-${mealType.toLowerCase()}`;
 
-                        <span className="meal-copy">
-                          <strong>{meal.name}</strong>
-                          <small>
-                            {meal.calories} kcal · {meal.protein}g
-                            protein · {meal.carbohydrates}g carbs ·{" "}
-                            {meal.fat}g fat
-                          </small>
-                        </span>
-                      </label>
-                    );
-                  })}
-              </section>
-            ))}
+              return (
+                <section className="meal-group" key={mealType}>
+                  <button
+                    type="button"
+                    className="meal-group-toggle"
+                    aria-expanded={!isCollapsed}
+                    aria-controls={groupId}
+                    onClick={() => toggleMealGroup(mealType)}
+                  >
+                    <span>
+                      <strong>{mealType}</strong>
+                      <small>
+                        {selectedCount} of {mealsForType.length} logged
+                      </small>
+                    </span>
+
+                    <span
+                      className={`meal-group-chevron ${
+                        isCollapsed ? "collapsed" : ""
+                      }`}
+                      aria-hidden="true"
+                    >
+                      ⌄
+                    </span>
+                  </button>
+
+                  <div
+                    id={groupId}
+                    className={`meal-group-content ${
+                      isCollapsed ? "collapsed" : ""
+                    }`}
+                    hidden={isCollapsed}
+                  >
+                    {mealsForType.map((meal) => {
+                      const selected =
+                        state.selectedMealIds.includes(meal.id);
+
+                      return (
+                        <label
+                          className={`meal-item ${
+                            selected ? "selected" : ""
+                          }`}
+                          key={meal.id}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selected}
+                            onChange={() => toggleMeal(meal.id)}
+                          />
+
+                          <span className="meal-copy">
+                            <strong>{meal.name}</strong>
+                            <small>
+                              {meal.calories} kcal · {meal.protein}g
+                              protein · {meal.carbohydrates}g carbs ·{" "}
+                              {meal.fat}g fat
+                            </small>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </div>
 
