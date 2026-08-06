@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const navigationItems = [
   {
@@ -25,38 +25,90 @@ const navigationItems = [
   },
 ];
 
+const USER_SELECTION_LOCK_MS = 700;
+
 export default function MobileNavigation() {
   const [activeSection, setActiveSection] = useState("dashboard");
+  const userSelectionLocked = useRef(false);
+  const selectionLockTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     function updateActiveSection() {
-      const offset = window.scrollY + 180;
-
-      let currentSection = "dashboard";
-
-      for (const item of navigationItems) {
-        const element = document.getElementById(item.targetId);
-
-        if (element && element.offsetTop <= offset) {
-          currentSection = item.targetId;
-        }
+      if (userSelectionLocked.current) {
+        return;
       }
 
-      setActiveSection(currentSection);
+      const navigationLine = 170;
+
+      const sections = navigationItems
+        .map((item) => {
+          const element = document.getElementById(item.targetId);
+
+          if (!element) {
+            return null;
+          }
+
+          return {
+            targetId: item.targetId,
+            top: element.getBoundingClientRect().top,
+          };
+        })
+        .filter(
+          (
+            section,
+          ): section is {
+            targetId: string;
+            top: number;
+          } => section !== null,
+        )
+        .sort((first, second) => first.top - second.top);
+
+      const passedSections = sections.filter(
+        (section) => section.top <= navigationLine,
+      );
+
+      const nearestPassedSection =
+        passedSections[passedSections.length - 1];
+
+      if (nearestPassedSection) {
+        setActiveSection(nearestPassedSection.targetId);
+        return;
+      }
+
+      if (sections[0]) {
+        setActiveSection(sections[0].targetId);
+      }
     }
 
     updateActiveSection();
+
     window.addEventListener("scroll", updateActiveSection, {
       passive: true,
     });
 
+    window.addEventListener("resize", updateActiveSection);
+
     return () => {
       window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+
+      if (selectionLockTimeout.current !== null) {
+        window.clearTimeout(selectionLockTimeout.current);
+      }
     };
   }, []);
 
   function navigateToSection(targetId: string) {
     setActiveSection(targetId);
+    userSelectionLocked.current = true;
+
+    if (selectionLockTimeout.current !== null) {
+      window.clearTimeout(selectionLockTimeout.current);
+    }
+
+    selectionLockTimeout.current = window.setTimeout(() => {
+      userSelectionLocked.current = false;
+    }, USER_SELECTION_LOCK_MS);
 
     if (targetId === "dashboard") {
       window.scrollTo({
@@ -70,11 +122,10 @@ export default function MobileNavigation() {
     const target = document.getElementById(targetId);
 
     if (!target) {
-      console.warn(`Navigation target not found: ${targetId}`);
       return;
     }
 
-    const navigationOffset = 110;
+    const navigationOffset = 92;
     const targetTop =
       target.getBoundingClientRect().top +
       window.scrollY -
