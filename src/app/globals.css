@@ -842,3 +842,33 @@ input::placeholder {
   height: 1px;
   pointer-events: none;
 }
+
+:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+.meal-item:focus-within,
+.check-card:focus-within {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(53, 214, 231, 0.14);
+}
+
+.meal-group-toggle:focus-visible,
+.mobile-navigation button:focus-visible,
+.primary-button:focus-visible,
+.secondary-button:focus-visible {
+  outline: 3px solid var(--cyan);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

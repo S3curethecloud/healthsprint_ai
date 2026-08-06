@@ -25,8 +25,23 @@ export const metadata: Metadata = {
   applicationName: "HealthSprint AI",
   manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/healthsprint-icon.svg",
-    apple: "/healthsprint-icon.svg",
+    icon: [
+      {
+        url: "/healthsprint-icon-192.png",
+        sizes: "192x192",
+        type: "image/png",
+      },
+      {
+        url: "/healthsprint-icon-512.png",
+        sizes: "512x512",
+        type: "image/png",
+      },
+    ],
+    apple: {
+      url: "/healthsprint-icon-192.png",
+      sizes: "192x192",
+      type: "image/png",
+    },
   },
   appleWebApp: {
     capable: true,

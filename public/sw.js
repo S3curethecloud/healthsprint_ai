@@ -1,8 +1,10 @@
-const CACHE_NAME = "healthsprint-ai-shell-v4";
+const CACHE_NAME = "healthsprint-ai-shell-v5";
 const APP_SHELL = [
   "/",
   "/manifest.webmanifest",
-  "/healthsprint-icon.svg",
+  "/healthsprint-icon-192.png",
+  "/healthsprint-icon-512.png",
+  "/healthsprint-maskable-512.png",
 ];
 
 self.addEventListener("install", (event) => {
