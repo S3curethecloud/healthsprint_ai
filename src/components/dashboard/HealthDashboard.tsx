@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import MobileNavigation from "@/components/navigation/MobileNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
 import type {
   HealthSprintState,
@@ -195,7 +196,7 @@ export default function HealthDashboard() {
 
   if (!isLoaded) {
     return (
-      <main className="app-shell">
+      <main className="app-shell" id="dashboard">
         <div className="loading-card">Loading HealthSprint AI...</div>
       </main>
     );
@@ -220,7 +221,26 @@ export default function HealthDashboard() {
         </div>
       </header>
 
-      <section className="progress-card">
+      <section className="mobile-daily-summary" aria-label="Daily calorie summary">
+        <div>
+          <span>Consumed</span>
+          <strong>{round(totals.calories)} kcal</strong>
+        </div>
+
+        <div>
+          <span>Remaining</span>
+          <strong className={caloriesRemaining < 0 ? "danger" : ""}>
+            {round(caloriesRemaining)} kcal
+          </strong>
+        </div>
+
+        <div>
+          <span>Day</span>
+          <strong>{state.currentDay}/45</strong>
+        </div>
+      </section>
+
+      <section className="progress-card" id="progress">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Program progress</p>
@@ -301,7 +321,7 @@ export default function HealthDashboard() {
       </section>
 
       <section className="content-grid">
-        <div className="panel meal-panel">
+        <div className="panel meal-panel" id="meals">
           <div className="section-heading">
             <div>
               <p className="eyebrow">Today&apos;s nutrition</p>
@@ -375,7 +395,7 @@ export default function HealthDashboard() {
           </div>
         </div>
 
-        <aside className="side-column">
+        <aside className="side-column" id="activity">
           <section className="panel">
             <p className="eyebrow">Movement</p>
             <h2>{dayOneWorkout.title}</h2>
@@ -639,6 +659,8 @@ export default function HealthDashboard() {
           Reset today
         </button>
       </section>
+
+      <MobileNavigation />
     </main>
   );
 }
