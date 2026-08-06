@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">HealthSprint AI</string>
+    <string name="loading_healthsprint">Loading HealthSprint AI…</string>
+    <string name="retry">Retry</string>
+    <string name="load_error_title">HealthSprint could not load</string>
+    <string name="load_error_message">Check your network connection and try again.</string>
+</resources>

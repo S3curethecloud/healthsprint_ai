@@ -1,0 +1,7 @@
+<resources>
+    <color name="healthsprint_background">#07111F</color>
+    <color name="healthsprint_surface">#0D1A2B</color>
+    <color name="healthsprint_primary">#35D6E7</color>
+    <color name="healthsprint_text">#F4F7FB</color>
+    <color name="healthsprint_muted">#AAB7C8</color>
+</resources>
