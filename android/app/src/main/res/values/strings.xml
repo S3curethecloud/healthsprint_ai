@@ -4,4 +4,10 @@
     <string name="retry">Retry</string>
     <string name="load_error_title">HealthSprint could not load</string>
     <string name="load_error_message">Check your network connection and try again.</string>
+
+    <string name="health_connect_rationale_title">Connect your health data</string>
+    <string name="health_connect_rationale_body">HealthSprint can read your steps, weight, exercise sessions, and calorie totals from Health Connect. Your records remain on your device and are not uploaded to HealthSprint cloud services.</string>
+    <string name="health_connect_rationale_continue">Review permissions</string>
+    <string name="health_connect_rationale_cancel">Not now</string>
+
 </resources>

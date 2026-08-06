@@ -7,51 +7,116 @@ import java.util.UUID
 
 class HealthSprintBridge(
     private val webView: WebView,
+    private val onHealthConnectStatus: (
+        requestId: String,
+    ) -> Unit,
+    private val onHealthConnectPermissions: (
+        requestId: String,
+    ) -> Unit,
+    private val onHealthConnectReadSummary: (
+        requestId: String,
+        payload: JSONObject,
+    ) -> Unit,
 ) {
     @JavascriptInterface
     fun postMessage(rawMessage: String) {
-        val response = try {
-            handleRequest(rawMessage)
+        try {
+            require(rawMessage.length <= MAX_MESSAGE_LENGTH)
+
+            val request = JSONObject(rawMessage)
+            val version = request.optString("version")
+            val requestId = request.optString("requestId")
+            val action = request.optString("action")
+            val payload =
+                request.optJSONObject("payload")
+                    ?: JSONObject()
+
+            require(version == BRIDGE_VERSION)
+            require(requestId.isNotBlank())
+            require(action.isNotBlank())
+
+            when (action) {
+                "app.version" ->
+                    emitSuccess(
+                        requestId = requestId,
+                        data = JSONObject()
+                            .put(
+                                "bridgeVersion",
+                                BRIDGE_VERSION,
+                            )
+                            .put(
+                                "applicationVersion",
+                                BuildConfig.VERSION_NAME,
+                            )
+                            .put(
+                                "buildType",
+                                BuildConfig.BUILD_TYPE,
+                            ),
+                    )
+
+                "healthConnect.status" ->
+                    onHealthConnectStatus(requestId)
+
+                "healthConnect.permissions" ->
+                    onHealthConnectPermissions(requestId)
+
+                "healthConnect.readSummary" ->
+                    onHealthConnectReadSummary(
+                        requestId,
+                        payload,
+                    )
+
+                else ->
+                    emitError(
+                        requestId = requestId,
+                        code = "UNKNOWN_ACTION",
+                        message =
+                            "The requested native bridge action is not supported.",
+                    )
+            }
         } catch (_: Exception) {
-            errorResponse(
+            emitError(
                 requestId = null,
                 code = "INVALID_REQUEST",
-                message = "The native bridge request was invalid.",
+                message =
+                    "The native bridge request was invalid.",
             )
         }
-
-        emitResponse(response)
     }
 
-    private fun handleRequest(
-        rawMessage: String,
-    ): JSONObject {
-        require(rawMessage.length <= MAX_MESSAGE_LENGTH)
+    fun emitSuccess(
+        requestId: String,
+        data: JSONObject,
+    ) {
+        emitResponse(
+            JSONObject()
+                .put("version", BRIDGE_VERSION)
+                .put("requestId", requestId)
+                .put("status", "success")
+                .put("data", data),
+        )
+    }
 
-        val request = JSONObject(rawMessage)
-        val version = request.optString("version")
-        val requestId = request.optString("requestId")
-        val action = request.optString("action")
-
-        require(version == BRIDGE_VERSION)
-        require(requestId.isNotBlank())
-        require(action.isNotBlank())
-
-        return when (action) {
-            "app.version" -> successResponse(
-                requestId = requestId,
-                data = JSONObject()
-                    .put("bridgeVersion", BRIDGE_VERSION)
-                    .put("applicationVersion", BuildConfig.VERSION_NAME)
-                    .put("buildType", BuildConfig.BUILD_TYPE),
-            )
-
-            else -> errorResponse(
-                requestId = requestId,
-                code = "UNKNOWN_ACTION",
-                message = "The requested native bridge action is not supported.",
-            )
-        }
+    fun emitError(
+        requestId: String?,
+        code: String,
+        message: String,
+    ) {
+        emitResponse(
+            JSONObject()
+                .put("version", BRIDGE_VERSION)
+                .put(
+                    "requestId",
+                    requestId ?: UUID.randomUUID().toString(),
+                )
+                .put("status", "error")
+                .put(
+                    "error",
+                    JSONObject()
+                        .put("code", code)
+                        .put("message", message),
+                ),
+        )
     }
 
     private fun emitResponse(response: JSONObject) {
@@ -72,35 +137,6 @@ class HealthSprintBridge(
             )
         }
     }
-
-    private fun successResponse(
-        requestId: String,
-        data: JSONObject,
-    ): JSONObject =
-        JSONObject()
-            .put("version", BRIDGE_VERSION)
-            .put("requestId", requestId)
-            .put("status", "success")
-            .put("data", data)
-
-    private fun errorResponse(
-        requestId: String?,
-        code: String,
-        message: String,
-    ): JSONObject =
-        JSONObject()
-            .put("version", BRIDGE_VERSION)
-            .put(
-                "requestId",
-                requestId ?: UUID.randomUUID().toString(),
-            )
-            .put("status", "error")
-            .put(
-                "error",
-                JSONObject()
-                    .put("code", code)
-                    .put("message", message),
-            )
 
     companion object {
         private const val BRIDGE_VERSION = "1.0"

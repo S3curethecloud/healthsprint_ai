@@ -3,6 +3,11 @@ package com.securethecloud.healthsprint
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.pm.PackageManager
+import org.json.JSONObject
+import java.time.Instant
+import kotlinx.coroutines.launch
+import androidx.lifecycle.lifecycleScope
+import android.content.Intent
 import android.os.Bundle
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
@@ -19,9 +24,75 @@ import com.securethecloud.healthsprint.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+    private lateinit var nativeBridge: HealthSprintBridge
+
+    private val healthConnectManager by lazy {
+        HealthConnectManager(applicationContext)
+    }
+
+    private var pendingHealthConnectRequestId:
+        String? = null
 
     private var pendingWebPermissionRequest:
         PermissionRequest? = null
+
+    private val healthConnectPermissionLauncher =
+        registerForActivityResult(
+            HealthConnectManager.permissionContract(),
+        ) { grantedPermissions ->
+            val requestId =
+                pendingHealthConnectRequestId
+                    ?: return@registerForActivityResult
+
+            pendingHealthConnectRequestId = null
+
+            val allGranted =
+                grantedPermissions.containsAll(
+                    HealthConnectManager.READ_PERMISSIONS,
+                )
+
+            nativeBridge.emitSuccess(
+                requestId = requestId,
+                data = JSONObject()
+                    .put("granted", allGranted)
+                    .put(
+                        "grantedPermissionCount",
+                        grantedPermissions.size,
+                    )
+                    .put(
+                        "requiredPermissionCount",
+                        HealthConnectManager
+                            .READ_PERMISSIONS
+                            .size,
+                    ),
+            )
+        }
+
+    private val healthConnectRationaleLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult(),
+        ) { result ->
+            val requestId =
+                pendingHealthConnectRequestId
+                    ?: return@registerForActivityResult
+
+            if (result.resultCode != RESULT_OK) {
+                pendingHealthConnectRequestId = null
+
+                nativeBridge.emitSuccess(
+                    requestId = requestId,
+                    data = JSONObject()
+                        .put("granted", false)
+                        .put("cancelled", true),
+                )
+
+                return@registerForActivityResult
+            }
+
+            healthConnectPermissionLauncher.launch(
+                HealthConnectManager.READ_PERMISSIONS,
+            )
+        }
 
     private val cameraPermissionLauncher =
         registerForActivityResult(
@@ -93,8 +164,33 @@ class MainActivity : AppCompatActivity() {
             setSupportMultipleWindows(false)
         }
 
+        nativeBridge =
+            HealthSprintBridge(
+                webView = webView,
+                onHealthConnectStatus = {
+                    requestId ->
+                    handleHealthConnectStatus(
+                        requestId,
+                    )
+                },
+                onHealthConnectPermissions = {
+                    requestId ->
+                    handleHealthConnectPermissions(
+                        requestId,
+                    )
+                },
+                onHealthConnectReadSummary = {
+                    requestId,
+                    payload ->
+                    handleHealthConnectReadSummary(
+                        requestId,
+                        payload,
+                    )
+                },
+            )
+
         webView.addJavascriptInterface(
-            HealthSprintBridge(webView),
+            nativeBridge,
             "HealthSprintNative",
         )
 
@@ -159,6 +255,194 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+    }
+
+    private fun handleHealthConnectStatus(
+        requestId: String,
+    ) {
+        lifecycleScope.launch {
+            val status = healthConnectManager.status()
+
+            val permissionsGranted =
+                if (
+                    status ==
+                    HealthConnectStatus.AVAILABLE
+                ) {
+                    healthConnectManager
+                        .hasAllReadPermissions()
+                } else {
+                    false
+                }
+
+            nativeBridge.emitSuccess(
+                requestId = requestId,
+                data = JSONObject()
+                    .put(
+                        "status",
+                        status.name.lowercase(),
+                    )
+                    .put(
+                        "available",
+                        status ==
+                            HealthConnectStatus.AVAILABLE,
+                    )
+                    .put(
+                        "providerPackage",
+                        HealthConnectManager
+                            .PROVIDER_PACKAGE_NAME,
+                    )
+                    .put(
+                        "permissionsGranted",
+                        permissionsGranted,
+                    ),
+            )
+        }
+    }
+
+    private fun handleHealthConnectPermissions(
+        requestId: String,
+    ) {
+        when (healthConnectManager.status()) {
+            HealthConnectStatus.AVAILABLE -> {
+                pendingHealthConnectRequestId =
+                    requestId
+
+                healthConnectRationaleLauncher.launch(
+                    Intent(
+                        this,
+                        HealthConnectRationaleActivity::class.java,
+                    ),
+                )
+            }
+
+            HealthConnectStatus
+                .PROVIDER_UPDATE_REQUIRED ->
+                nativeBridge.emitError(
+                    requestId = requestId,
+                    code =
+                        "PROVIDER_UPDATE_REQUIRED",
+                    message =
+                        "Health Connect must be installed or updated.",
+                )
+
+            HealthConnectStatus.UNAVAILABLE ->
+                nativeBridge.emitError(
+                    requestId = requestId,
+                    code = "HEALTH_CONNECT_UNAVAILABLE",
+                    message =
+                        "Health Connect is unavailable on this device.",
+                )
+        }
+    }
+
+    private fun handleHealthConnectReadSummary(
+        requestId: String,
+        payload: JSONObject,
+    ) {
+        lifecycleScope.launch {
+            try {
+                val startTime =
+                    Instant.parse(
+                        payload.getString("startTime"),
+                    )
+
+                val endTime =
+                    Instant.parse(
+                        payload.getString("endTime"),
+                    )
+
+                val summary =
+                    healthConnectManager.readSummary(
+                        startTime = startTime,
+                        endTime = endTime,
+                    )
+
+                val data =
+                    JSONObject()
+                        .put(
+                            "startTime",
+                            summary.startTime.toString(),
+                        )
+                        .put(
+                            "endTime",
+                            summary.endTime.toString(),
+                        )
+                        .put("steps", summary.steps)
+                        .put(
+                            "activeCalories",
+                            summary.activeCalories,
+                        )
+                        .put(
+                            "totalCalories",
+                            summary.totalCalories,
+                        )
+                        .put(
+                            "exerciseSessionCount",
+                            summary.exerciseSessionCount,
+                        )
+                        .put(
+                            "exerciseDurationMinutes",
+                            summary.exerciseDurationMinutes,
+                        )
+
+                if (
+                    summary.latestWeightPounds != null &&
+                    summary.latestWeightTime != null
+                ) {
+                    data.put(
+                        "latestWeight",
+                        JSONObject()
+                            .put(
+                                "pounds",
+                                summary.latestWeightPounds,
+                            )
+                            .put(
+                                "time",
+                                summary.latestWeightTime
+                                    .toString(),
+                            ),
+                    )
+                } else {
+                    data.put(
+                        "latestWeight",
+                        JSONObject.NULL,
+                    )
+                }
+
+                nativeBridge.emitSuccess(
+                    requestId = requestId,
+                    data = data,
+                )
+            } catch (_: HealthConnectPermissionException) {
+                nativeBridge.emitError(
+                    requestId = requestId,
+                    code = "PERMISSION_DENIED",
+                    message =
+                        "Health Connect read permission was not granted.",
+                )
+            } catch (_: HealthConnectUnavailableException) {
+                nativeBridge.emitError(
+                    requestId = requestId,
+                    code = "HEALTH_CONNECT_UNAVAILABLE",
+                    message =
+                        "Health Connect is unavailable on this device.",
+                )
+            } catch (_: IllegalArgumentException) {
+                nativeBridge.emitError(
+                    requestId = requestId,
+                    code = "INVALID_DATE_RANGE",
+                    message =
+                        "Provide a valid ISO-8601 range no longer than 45 days.",
+                )
+            } catch (_: Exception) {
+                nativeBridge.emitError(
+                    requestId = requestId,
+                    code = "READ_FAILED",
+                    message =
+                        "Health Connect could not return the requested summary.",
+                )
+            }
+        }
     }
 
     private fun loadHealthSprint() {
