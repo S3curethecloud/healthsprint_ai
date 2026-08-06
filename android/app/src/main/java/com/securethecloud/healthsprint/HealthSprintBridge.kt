@@ -17,6 +17,14 @@ class HealthSprintBridge(
         requestId: String,
         payload: JSONObject,
     ) -> Unit,
+    private val onHealthConnectWriteWeight: (
+        requestId: String,
+        payload: JSONObject,
+    ) -> Unit,
+    private val onHealthConnectWriteExercise: (
+        requestId: String,
+        payload: JSONObject,
+    ) -> Unit,
 ) {
     @JavascriptInterface
     fun postMessage(rawMessage: String) {
@@ -62,6 +70,18 @@ class HealthSprintBridge(
 
                 "healthConnect.readSummary" ->
                     onHealthConnectReadSummary(
+                        requestId,
+                        payload,
+                    )
+
+                "healthConnect.writeWeight" ->
+                    onHealthConnectWriteWeight(
+                        requestId,
+                        payload,
+                    )
+
+                "healthConnect.writeExercise" ->
+                    onHealthConnectWriteExercise(
                         requestId,
                         payload,
                     )
