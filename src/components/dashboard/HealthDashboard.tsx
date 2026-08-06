@@ -1,0 +1,644 @@
+"use client";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+
+import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
+import type {
+  HealthSprintState,
+  MealItem,
+  MealType,
+} from "@/types/health";
+
+const STORAGE_KEY = "healthsprint-ai-state-v1";
+
+const defaultState: HealthSprintState = {
+  currentDay: 1,
+  calorieTarget: 2100,
+  selectedMealIds: [],
+  customMeals: [],
+  metrics: {
+    waterOunces: 0,
+    steps: 0,
+    weight: 245,
+    workoutCompleted: false,
+  },
+};
+
+const mealTypes: MealType[] = [
+  "Breakfast",
+  "Lunch",
+  "Snack",
+  "Dinner",
+];
+
+function round(value: number) {
+  return Math.round(value * 10) / 10;
+}
+
+export default function HealthDashboard() {
+  const [state, setState] = useState<HealthSprintState>(defaultState);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  const [customMealName, setCustomMealName] = useState("");
+  const [customMealType, setCustomMealType] =
+    useState<MealType>("Breakfast");
+  const [customMealCalories, setCustomMealCalories] = useState("");
+  const [customMealProtein, setCustomMealProtein] = useState("");
+  const [customMealCarbs, setCustomMealCarbs] = useState("");
+  const [customMealFat, setCustomMealFat] = useState("");
+
+  useEffect(() => {
+    const loadSavedState = window.setTimeout(() => {
+      try {
+        const savedState = window.localStorage.getItem(STORAGE_KEY);
+
+        if (savedState) {
+          setState(JSON.parse(savedState) as HealthSprintState);
+        }
+      } catch {
+        window.localStorage.removeItem(STORAGE_KEY);
+      } finally {
+        setIsLoaded(true);
+      }
+    }, 0);
+
+    return () => window.clearTimeout(loadSavedState);
+  }, []);
+
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
+
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }, [isLoaded, state]);
+
+  const allMeals = useMemo(
+    () => [...dayOneMeals, ...state.customMeals],
+    [state.customMeals],
+  );
+
+  const selectedMeals = useMemo(
+    () =>
+      allMeals.filter((meal) =>
+        state.selectedMealIds.includes(meal.id),
+      ),
+    [allMeals, state.selectedMealIds],
+  );
+
+  const totals = useMemo(
+    () =>
+      selectedMeals.reduce(
+        (total, meal) => ({
+          calories: total.calories + meal.calories,
+          protein: total.protein + meal.protein,
+          carbohydrates:
+            total.carbohydrates + meal.carbohydrates,
+          fat: total.fat + meal.fat,
+        }),
+        {
+          calories: 0,
+          protein: 0,
+          carbohydrates: 0,
+          fat: 0,
+        },
+      ),
+    [selectedMeals],
+  );
+
+  const caloriesRemaining = state.calorieTarget - totals.calories;
+  const calorieProgress = Math.min(
+    100,
+    Math.max(0, (totals.calories / state.calorieTarget) * 100),
+  );
+  const programProgress = (state.currentDay / 45) * 100;
+  const waterProgress = Math.min(
+    100,
+    (state.metrics.waterOunces / 96) * 100,
+  );
+  const stepProgress = Math.min(
+    100,
+    (state.metrics.steps / dayOneWorkout.stepTarget) * 100,
+  );
+
+  function toggleMeal(mealId: string) {
+    setState((current) => {
+      const selected = current.selectedMealIds.includes(mealId);
+
+      return {
+        ...current,
+        selectedMealIds: selected
+          ? current.selectedMealIds.filter((id) => id !== mealId)
+          : [...current.selectedMealIds, mealId],
+      };
+    });
+  }
+
+  function addCustomMeal(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const calories = Number(customMealCalories);
+    const protein = Number(customMealProtein || 0);
+    const carbohydrates = Number(customMealCarbs || 0);
+    const fat = Number(customMealFat || 0);
+
+    if (
+      !customMealName.trim() ||
+      !Number.isFinite(calories) ||
+      calories <= 0
+    ) {
+      return;
+    }
+
+    const meal: MealItem = {
+      id: `custom-${Date.now()}`,
+      name: customMealName.trim(),
+      mealType: customMealType,
+      calories,
+      protein,
+      carbohydrates,
+      fat,
+    };
+
+    setState((current) => ({
+      ...current,
+      customMeals: [...current.customMeals, meal],
+      selectedMealIds: [...current.selectedMealIds, meal.id],
+    }));
+
+    setCustomMealName("");
+    setCustomMealCalories("");
+    setCustomMealProtein("");
+    setCustomMealCarbs("");
+    setCustomMealFat("");
+  }
+
+  function resetDay() {
+    const confirmed = window.confirm(
+      "Reset today's meal selections and activity metrics?",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setState((current) => ({
+      ...defaultState,
+      calorieTarget: current.calorieTarget,
+      currentDay: current.currentDay,
+      metrics: {
+        ...defaultState.metrics,
+        weight: current.metrics.weight,
+      },
+    }));
+  }
+
+  if (!isLoaded) {
+    return (
+      <main className="app-shell">
+        <div className="loading-card">Loading HealthSprint AI...</div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="app-shell">
+      <header className="hero">
+        <div>
+          <p className="eyebrow">45-Day Nutrition and Fitness Coach</p>
+          <h1>HealthSprint AI</h1>
+          <p className="hero-copy">
+            Track your meals, calories, movement, water, and daily
+            commitments without losing sight of the full 45-day goal.
+          </p>
+        </div>
+
+        <div className="day-badge">
+          <span>Program day</span>
+          <strong>{state.currentDay}</strong>
+          <small>of 45</small>
+        </div>
+      </header>
+
+      <section className="progress-card">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Program progress</p>
+            <h2>Day {state.currentDay} of 45</h2>
+          </div>
+
+          <label className="compact-field">
+            Current day
+            <input
+              type="number"
+              min="1"
+              max="45"
+              value={state.currentDay}
+              onChange={(event) =>
+                setState((current) => ({
+                  ...current,
+                  currentDay: Math.min(
+                    45,
+                    Math.max(1, Number(event.target.value) || 1),
+                  ),
+                }))
+              }
+            />
+          </label>
+        </div>
+
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${programProgress}%` }}
+          />
+        </div>
+      </section>
+
+      <section className="metric-grid">
+        <article className="metric-card featured">
+          <span>Calories consumed</span>
+          <strong>{round(totals.calories)}</strong>
+          <small>of {state.calorieTarget} kcal</small>
+
+          <div className="progress-track">
+            <div
+              className="progress-fill"
+              style={{ width: `${calorieProgress}%` }}
+            />
+          </div>
+        </article>
+
+        <article className="metric-card">
+          <span>Calories remaining</span>
+          <strong className={caloriesRemaining < 0 ? "danger" : ""}>
+            {round(caloriesRemaining)}
+          </strong>
+          <small>
+            {caloriesRemaining >= 0
+              ? "Available today"
+              : "Above today's target"}
+          </small>
+        </article>
+
+        <article className="metric-card">
+          <span>Protein</span>
+          <strong>{round(totals.protein)} g</strong>
+          <small>Muscle-supporting intake</small>
+        </article>
+
+        <article className="metric-card">
+          <span>Carbohydrates</span>
+          <strong>{round(totals.carbohydrates)} g</strong>
+          <small>Daily fuel</small>
+        </article>
+
+        <article className="metric-card">
+          <span>Fat</span>
+          <strong>{round(totals.fat)} g</strong>
+          <small>Daily total</small>
+        </article>
+      </section>
+
+      <section className="content-grid">
+        <div className="panel meal-panel">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Today&apos;s nutrition</p>
+              <h2>Day 1 meal plan</h2>
+            </div>
+
+            <label className="compact-field">
+              Calorie target
+              <input
+                type="number"
+                min="1200"
+                max="5000"
+                step="50"
+                value={state.calorieTarget}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    calorieTarget: Math.max(
+                      1200,
+                      Number(event.target.value) || 2100,
+                    ),
+                  }))
+                }
+              />
+            </label>
+          </div>
+
+          <p className="panel-description">
+            Check each item after eating it. Nutrition values are
+            estimates and should be refined using package labels or a
+            verified nutrition source.
+          </p>
+
+          <div className="meal-groups">
+            {mealTypes.map((mealType) => (
+              <section className="meal-group" key={mealType}>
+                <h3>{mealType}</h3>
+
+                {allMeals
+                  .filter((meal) => meal.mealType === mealType)
+                  .map((meal) => {
+                    const selected =
+                      state.selectedMealIds.includes(meal.id);
+
+                    return (
+                      <label
+                        className={`meal-item ${
+                          selected ? "selected" : ""
+                        }`}
+                        key={meal.id}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selected}
+                          onChange={() => toggleMeal(meal.id)}
+                        />
+
+                        <span className="meal-copy">
+                          <strong>{meal.name}</strong>
+                          <small>
+                            {meal.calories} kcal · {meal.protein}g
+                            protein · {meal.carbohydrates}g carbs ·{" "}
+                            {meal.fat}g fat
+                          </small>
+                        </span>
+                      </label>
+                    );
+                  })}
+              </section>
+            ))}
+          </div>
+        </div>
+
+        <aside className="side-column">
+          <section className="panel">
+            <p className="eyebrow">Movement</p>
+            <h2>{dayOneWorkout.title}</h2>
+            <p className="panel-description">
+              {dayOneWorkout.description}
+            </p>
+
+            <label className="check-card">
+              <input
+                type="checkbox"
+                checked={state.metrics.workoutCompleted}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    metrics: {
+                      ...current.metrics,
+                      workoutCompleted: event.target.checked,
+                    },
+                  }))
+                }
+              />
+              <span>
+                <strong>Workout completed</strong>
+                <small>
+                  Mark this only after completing the assigned session.
+                </small>
+              </span>
+            </label>
+
+            <label className="form-field">
+              Steps
+              <input
+                type="number"
+                min="0"
+                value={state.metrics.steps}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    metrics: {
+                      ...current.metrics,
+                      steps: Math.max(
+                        0,
+                        Number(event.target.value) || 0,
+                      ),
+                    },
+                  }))
+                }
+              />
+            </label>
+
+            <div className="progress-label">
+              <span>{state.metrics.steps.toLocaleString()} steps</span>
+              <span>
+                {dayOneWorkout.stepTarget.toLocaleString()} target
+              </span>
+            </div>
+
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{ width: `${stepProgress}%` }}
+              />
+            </div>
+          </section>
+
+          <section className="panel">
+            <p className="eyebrow">Hydration</p>
+            <h2>{state.metrics.waterOunces} oz</h2>
+
+            <div className="progress-track">
+              <div
+                className="progress-fill"
+                style={{ width: `${waterProgress}%` }}
+              />
+            </div>
+
+            <div className="button-row">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  setState((current) => ({
+                    ...current,
+                    metrics: {
+                      ...current.metrics,
+                      waterOunces: Math.max(
+                        0,
+                        current.metrics.waterOunces - 8,
+                      ),
+                    },
+                  }))
+                }
+              >
+                − 8 oz
+              </button>
+
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() =>
+                  setState((current) => ({
+                    ...current,
+                    metrics: {
+                      ...current.metrics,
+                      waterOunces:
+                        current.metrics.waterOunces + 8,
+                    },
+                  }))
+                }
+              >
+                + 8 oz
+              </button>
+            </div>
+          </section>
+
+          <section className="panel">
+            <p className="eyebrow">Body measurement</p>
+            <h2>Current weight</h2>
+
+            <label className="form-field">
+              Weight in pounds
+              <input
+                type="number"
+                min="80"
+                max="700"
+                step="0.1"
+                value={state.metrics.weight}
+                onChange={(event) =>
+                  setState((current) => ({
+                    ...current,
+                    metrics: {
+                      ...current.metrics,
+                      weight:
+                        Number(event.target.value) ||
+                        current.metrics.weight,
+                    },
+                  }))
+                }
+              />
+            </label>
+          </section>
+        </aside>
+      </section>
+
+      <section className="panel custom-meal-panel">
+        <div>
+          <p className="eyebrow">Manual food entry</p>
+          <h2>Add another food</h2>
+          <p className="panel-description">
+            Enter values from the package label or a verified nutrition
+            source.
+          </p>
+        </div>
+
+        <form className="meal-form" onSubmit={addCustomMeal}>
+          <label className="form-field wide-field">
+            Food name
+            <input
+              required
+              type="text"
+              value={customMealName}
+              onChange={(event) =>
+                setCustomMealName(event.target.value)
+              }
+              placeholder="Example: Grilled chicken salad"
+            />
+          </label>
+
+          <label className="form-field">
+            Meal
+            <select
+              value={customMealType}
+              onChange={(event) =>
+                setCustomMealType(event.target.value as MealType)
+              }
+            >
+              {mealTypes.map((mealType) => (
+                <option value={mealType} key={mealType}>
+                  {mealType}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="form-field">
+            Calories
+            <input
+              required
+              type="number"
+              min="1"
+              value={customMealCalories}
+              onChange={(event) =>
+                setCustomMealCalories(event.target.value)
+              }
+            />
+          </label>
+
+          <label className="form-field">
+            Protein (g)
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={customMealProtein}
+              onChange={(event) =>
+                setCustomMealProtein(event.target.value)
+              }
+            />
+          </label>
+
+          <label className="form-field">
+            Carbs (g)
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={customMealCarbs}
+              onChange={(event) =>
+                setCustomMealCarbs(event.target.value)
+              }
+            />
+          </label>
+
+          <label className="form-field">
+            Fat (g)
+            <input
+              type="number"
+              min="0"
+              step="0.1"
+              value={customMealFat}
+              onChange={(event) =>
+                setCustomMealFat(event.target.value)
+              }
+            />
+          </label>
+
+          <button className="primary-button form-button" type="submit">
+            Add and log food
+          </button>
+        </form>
+      </section>
+
+      <section className="safety-card">
+        <div>
+          <p className="eyebrow">Health guardrail</p>
+          <h2>Progress over punishment</h2>
+          <p>
+            HealthSprint AI is a tracking tool, not a medical device.
+            Avoid crash dieting or unusually low calorie intake. Speak
+            with a qualified clinician before major diet or exercise
+            changes, particularly when managing medication or a medical
+            condition.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="secondary-button"
+          onClick={resetDay}
+        >
+          Reset today
+        </button>
+      </section>
+    </main>
+  );
+}
