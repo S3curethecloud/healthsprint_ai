@@ -184,11 +184,11 @@ export default function DesktopNavigation() {
     >
       <div className="desktop-brand">
         <Image
-          src="/healthsprint-icon.svg"
+          src="/healthsprint-icon-192.png"
           alt=""
           width={42}
           height={42}
-          unoptimized
+          priority
         />
 
         <div>
