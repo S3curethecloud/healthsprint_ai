@@ -6,6 +6,9 @@ import DailyOverview from "@/components/dashboard/DailyOverview";
 import MobileNavigation from "@/components/navigation/MobileNavigation";
 import BarcodeScanner from "@/components/scanner/BarcodeScanner";
 import ProductLookup from "@/components/scanner/ProductLookup";
+import ServingConfirmation, {
+  type ConfirmedScannedMeal,
+} from "@/components/scanner/ServingConfirmation";
 import ApplicationTopBar from "@/components/shell/ApplicationTopBar";
 import DesktopNavigation from "@/components/shell/DesktopNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
@@ -52,6 +55,8 @@ export default function HealthDashboard() {
   const [scannedBarcode, setScannedBarcode] = useState("");
   const [scannedProduct, setScannedProduct] =
     useState<ScannedProduct | null>(null);
+  const [scannedMealMessage, setScannedMealMessage] =
+    useState("");
   const [customMealName, setCustomMealName] = useState("");
   const [customMealType, setCustomMealType] =
     useState<MealType>("Breakfast");
@@ -159,6 +164,33 @@ export default function HealthDashboard() {
           : [...current.selectedMealIds, mealId],
       };
     });
+  }
+
+  function addScannedProduct(
+    confirmedMeal: ConfirmedScannedMeal,
+  ) {
+    const meal: MealItem = {
+      id: `scanned-${confirmedMeal.product.barcode}-${Date.now()}`,
+      name:
+        confirmedMeal.quantity === 1
+          ? confirmedMeal.product.name
+          : `${confirmedMeal.product.name} × ${confirmedMeal.quantity}`,
+      mealType: confirmedMeal.mealType,
+      calories: confirmedMeal.calories,
+      protein: confirmedMeal.protein,
+      carbohydrates: confirmedMeal.carbohydrates,
+      fat: confirmedMeal.fat,
+    };
+
+    setState((current) => ({
+      ...current,
+      customMeals: [...current.customMeals, meal],
+      selectedMealIds: [...current.selectedMealIds, meal.id],
+    }));
+
+    setScannedMealMessage(
+      `${meal.name} was added to ${meal.mealType}.`,
+    );
   }
 
   function addCustomMeal(event: FormEvent<HTMLFormElement>) {
@@ -561,6 +593,8 @@ export default function HealthDashboard() {
       <BarcodeScanner
         onBarcodeDetected={(barcode) => {
           setScannedBarcode(barcode);
+          setScannedProduct(null);
+          setScannedMealMessage("");
           setCustomMealName((current) =>
             current.trim()
               ? current
@@ -577,9 +611,20 @@ export default function HealthDashboard() {
       )}
 
       {scannedProduct && (
-        <p className="captured-barcode-status" role="status">
-          Product resolved:{" "}
-          <strong>{scannedProduct.name}</strong>
+        <ServingConfirmation
+          key={`${scannedProduct.barcode}-${scannedProduct.nutritionBasis}`}
+          product={scannedProduct}
+          onConfirm={addScannedProduct}
+        />
+      )}
+
+      {scannedMealMessage && (
+        <p
+          className="scanned-meal-success"
+          role="status"
+          aria-live="polite"
+        >
+          {scannedMealMessage}
         </p>
       )}
 
