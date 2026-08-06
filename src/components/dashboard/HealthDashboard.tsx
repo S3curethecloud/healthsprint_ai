@@ -3,6 +3,8 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import MobileNavigation from "@/components/navigation/MobileNavigation";
+import ApplicationTopBar from "@/components/shell/ApplicationTopBar";
+import DesktopNavigation from "@/components/shell/DesktopNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
 import type {
   HealthSprintState,
@@ -220,8 +222,14 @@ export default function HealthDashboard() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="hero">
+    <div className="platform-shell">
+      <DesktopNavigation />
+
+      <div className="platform-workspace">
+        <ApplicationTopBar currentDay={state.currentDay} />
+
+        <main className="app-shell" id="dashboard">
+          <header className="hero">
         <div>
           <p className="eyebrow">45-Day Nutrition and Fitness Coach</p>
           <h1>HealthSprint AI</h1>
@@ -718,7 +726,9 @@ export default function HealthDashboard() {
         </button>
       </section>
 
-      <MobileNavigation />
-    </main>
+          <MobileNavigation />
+        </main>
+      </div>
+    </div>
   );
 }
