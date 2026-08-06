@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import DailyOverview from "@/components/dashboard/DailyOverview";
 import MobileNavigation from "@/components/navigation/MobileNavigation";
+import BarcodeScanner from "@/components/scanner/BarcodeScanner";
 import ApplicationTopBar from "@/components/shell/ApplicationTopBar";
 import DesktopNavigation from "@/components/shell/DesktopNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
@@ -46,6 +47,7 @@ export default function HealthDashboard() {
     Set<MealType>
   >(new Set());
 
+  const [scannedBarcode, setScannedBarcode] = useState("");
   const [customMealName, setCustomMealName] = useState("");
   const [customMealType, setCustomMealType] =
     useState<MealType>("Breakfast");
@@ -551,6 +553,23 @@ export default function HealthDashboard() {
           </section>
         </aside>
       </section>
+
+      <BarcodeScanner
+        onBarcodeDetected={(barcode) => {
+          setScannedBarcode(barcode);
+          setCustomMealName((current) =>
+            current.trim()
+              ? current
+              : `Scanned product ${barcode}`,
+          );
+        }}
+      />
+
+      {scannedBarcode && (
+        <p className="captured-barcode-status" role="status">
+          Captured barcode: <strong>{scannedBarcode}</strong>
+        </p>
+      )}
 
       <section className="panel custom-meal-panel">
         <div>
