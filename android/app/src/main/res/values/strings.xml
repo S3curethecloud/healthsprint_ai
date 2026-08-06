@@ -10,4 +10,14 @@
     <string name="health_connect_rationale_continue">Review permissions</string>
     <string name="health_connect_rationale_cancel">Not now</string>
 
+
+    <string name="health_connect_weight_confirmation_title">Save weight to Health Connect?</string>
+    <string name="health_connect_weight_confirmation_message">HealthSprint will write this weight entry to Health Connect only after you confirm.</string>
+    <string name="health_connect_write_confirm">Save</string>
+    <string name="health_connect_write_cancel">Cancel</string>
+
+
+    <string name="health_connect_exercise_confirmation_title">Save exercise to Health Connect?</string>
+    <string name="health_connect_exercise_confirmation_message">HealthSprint will write this exercise session to Health Connect only after you confirm.</string>
+
 </resources>

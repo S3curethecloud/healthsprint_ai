@@ -7,6 +7,9 @@ import org.json.JSONObject
 import java.time.Instant
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
+import androidx.health.connect.client.permission.HealthPermission
+import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.WeightRecord
 import android.content.Intent
 import android.os.Bundle
 import android.webkit.PermissionRequest
@@ -18,6 +21,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.securethecloud.healthsprint.databinding.ActivityMainBinding
@@ -33,10 +37,79 @@ class MainActivity : AppCompatActivity() {
     private var pendingHealthConnectRequestId:
         String? = null
 
+
+    private var pendingWeightWrite:
+        PendingWeightWrite? = null
+
+
+    private var pendingExerciseWrite:
+        PendingExerciseWrite? = null
+
     private var pendingWebPermissionRequest:
         PermissionRequest? = null
 
-    private val healthConnectPermissionLauncher =
+    private val healthConnectWritePermissionLauncher =
+        registerForActivityResult(
+            HealthConnectManager.permissionContract(),
+        ) { grantedPermissions ->
+            val weightWrite = pendingWeightWrite
+            val exerciseWrite = pendingExerciseWrite
+
+            pendingWeightWrite = null
+            pendingExerciseWrite = null
+
+            when {
+                weightWrite != null -> {
+                    val granted =
+                        grantedPermissions.contains(
+                            HealthPermission
+                                .getWritePermission(
+                                    WeightRecord::class,
+                                ),
+                        )
+
+                    if (granted) {
+                        performConfirmedWeightWrite(
+                            weightWrite,
+                        )
+                    } else {
+                        nativeBridge.emitError(
+                            requestId =
+                                weightWrite.requestId,
+                            code = "PERMISSION_DENIED",
+                            message =
+                                "Health Connect weight-write permission was not granted.",
+                        )
+                    }
+                }
+
+                exerciseWrite != null -> {
+                    val granted =
+                        grantedPermissions.contains(
+                            HealthPermission
+                                .getWritePermission(
+                                    ExerciseSessionRecord::class,
+                                ),
+                        )
+
+                    if (granted) {
+                        performConfirmedExerciseWrite(
+                            exerciseWrite,
+                        )
+                    } else {
+                        nativeBridge.emitError(
+                            requestId =
+                                exerciseWrite.requestId,
+                            code = "PERMISSION_DENIED",
+                            message =
+                                "Health Connect exercise-write permission was not granted.",
+                        )
+                    }
+                }
+            }
+        }
+
+    private val healthConnectReadPermissionLauncher =
         registerForActivityResult(
             HealthConnectManager.permissionContract(),
         ) { grantedPermissions ->
@@ -89,7 +162,7 @@ class MainActivity : AppCompatActivity() {
                 return@registerForActivityResult
             }
 
-            healthConnectPermissionLauncher.launch(
+            healthConnectReadPermissionLauncher.launch(
                 HealthConnectManager.READ_PERMISSIONS,
             )
         }
@@ -187,6 +260,22 @@ class MainActivity : AppCompatActivity() {
                         payload,
                     )
                 },
+                onHealthConnectWriteWeight = {
+                    requestId,
+                    payload ->
+                    handleHealthConnectWriteWeight(
+                        requestId,
+                        payload,
+                    )
+                },
+                onHealthConnectWriteExercise = {
+                    requestId,
+                    payload ->
+                    handleHealthConnectWriteExercise(
+                        requestId,
+                        payload,
+                    )
+                },
             )
 
         webView.addJavascriptInterface(
@@ -263,13 +352,24 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val status = healthConnectManager.status()
 
-            val permissionsGranted =
+            val readPermissionsGranted =
                 if (
                     status ==
                     HealthConnectStatus.AVAILABLE
                 ) {
                     healthConnectManager
                         .hasAllReadPermissions()
+                } else {
+                    false
+                }
+
+            val writePermissionsGranted =
+                if (
+                    status ==
+                    HealthConnectStatus.AVAILABLE
+                ) {
+                    healthConnectManager
+                        .hasAllWritePermissions()
                 } else {
                     false
                 }
@@ -293,7 +393,15 @@ class MainActivity : AppCompatActivity() {
                     )
                     .put(
                         "permissionsGranted",
-                        permissionsGranted,
+                        readPermissionsGranted,
+                    )
+                    .put(
+                        "readPermissionsGranted",
+                        readPermissionsGranted,
+                    )
+                    .put(
+                        "writePermissionsGranted",
+                        writePermissionsGranted,
                     ),
             )
         }
@@ -445,6 +553,520 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun handleHealthConnectWriteWeight(
+        requestId: String,
+        payload: JSONObject,
+    ) {
+        try {
+            val pendingWrite =
+                PendingWeightWrite(
+                    requestId = requestId,
+                    weightPounds =
+                        payload.getDouble(
+                            "weightPounds",
+                        ),
+                    timestamp =
+                        Instant.parse(
+                            payload.getString(
+                                "timestamp",
+                            ),
+                        ),
+                    clientRecordId =
+                        payload.getString(
+                            "clientRecordId",
+                        ),
+                    clientRecordVersion =
+                        payload.optLong(
+                            "clientRecordVersion",
+                            1L,
+                        ),
+                )
+
+            validatePendingWeightWrite(
+                pendingWrite,
+            )
+
+            AlertDialog.Builder(this)
+                .setTitle(
+                    R.string
+                        .health_connect_weight_confirmation_title,
+                )
+                .setMessage(
+                    R.string
+                        .health_connect_weight_confirmation_message,
+                )
+                .setNegativeButton(
+                    R.string.health_connect_write_cancel,
+                ) { _, _ ->
+                    nativeBridge.emitSuccess(
+                        requestId = requestId,
+                        data = JSONObject()
+                            .put("written", false)
+                            .put("cancelled", true),
+                    )
+                }
+                .setPositiveButton(
+                    R.string.health_connect_write_confirm,
+                ) { _, _ ->
+                    beginConfirmedWeightWrite(
+                        pendingWrite,
+                    )
+                }
+                .setOnCancelListener {
+                    nativeBridge.emitSuccess(
+                        requestId = requestId,
+                        data = JSONObject()
+                            .put("written", false)
+                            .put("cancelled", true),
+                    )
+                }
+                .show()
+        } catch (_: Exception) {
+            nativeBridge.emitError(
+                requestId = requestId,
+                code = "INVALID_WEIGHT_PAYLOAD",
+                message =
+                    "Provide a valid weight, timestamp, clientRecordId, and record version.",
+            )
+        }
+    }
+
+    private fun validatePendingWeightWrite(
+        pendingWrite: PendingWeightWrite,
+    ) {
+        require(pendingWrite.weightPounds.isFinite())
+        require(
+            pendingWrite.weightPounds in
+                HealthConnectManager.MIN_WEIGHT_POUNDS..
+                    HealthConnectManager.MAX_WEIGHT_POUNDS,
+        )
+        require(
+            pendingWrite.clientRecordId.isNotBlank(),
+        )
+        require(
+            pendingWrite.clientRecordId.length <=
+                HealthConnectManager
+                    .MAX_CLIENT_RECORD_ID_LENGTH,
+        )
+        require(
+            pendingWrite.clientRecordVersion >= 1L,
+        )
+    }
+
+    private fun beginConfirmedWeightWrite(
+        pendingWrite: PendingWeightWrite,
+    ) {
+        lifecycleScope.launch {
+            when (healthConnectManager.status()) {
+                HealthConnectStatus.AVAILABLE -> {
+                    if (
+                        healthConnectManager
+                            .hasWeightWritePermission()
+                    ) {
+                        performConfirmedWeightWrite(
+                            pendingWrite,
+                        )
+                    } else {
+                        pendingWeightWrite =
+                            pendingWrite
+
+                        healthConnectWritePermissionLauncher
+                            .launch(
+                                setOf(
+                                    HealthPermission
+                                        .getWritePermission(
+                                            WeightRecord::class,
+                                        ),
+                                ),
+                            )
+                    }
+                }
+
+                HealthConnectStatus
+                    .PROVIDER_UPDATE_REQUIRED ->
+                    nativeBridge.emitError(
+                        requestId =
+                            pendingWrite.requestId,
+                        code =
+                            "PROVIDER_UPDATE_REQUIRED",
+                        message =
+                            "Health Connect must be installed or updated.",
+                    )
+
+                HealthConnectStatus.UNAVAILABLE ->
+                    nativeBridge.emitError(
+                        requestId =
+                            pendingWrite.requestId,
+                        code =
+                            "HEALTH_CONNECT_UNAVAILABLE",
+                        message =
+                            "Health Connect is unavailable on this device.",
+                    )
+            }
+        }
+    }
+
+    private fun performConfirmedWeightWrite(
+        pendingWrite: PendingWeightWrite,
+    ) {
+        pendingWeightWrite = null
+
+        lifecycleScope.launch {
+            try {
+                val result =
+                    healthConnectManager.writeWeight(
+                        weightPounds =
+                            pendingWrite.weightPounds,
+                        timestamp =
+                            pendingWrite.timestamp,
+                        clientRecordId =
+                            pendingWrite.clientRecordId,
+                        clientRecordVersion =
+                            pendingWrite.clientRecordVersion,
+                    )
+
+                nativeBridge.emitSuccess(
+                    requestId =
+                        pendingWrite.requestId,
+                    data = JSONObject()
+                        .put("written", true)
+                        .put(
+                            "clientRecordId",
+                            result.clientRecordId,
+                        )
+                        .put(
+                            "clientRecordVersion",
+                            result.clientRecordVersion,
+                        )
+                        .put(
+                            "recordId",
+                            result.recordId
+                                ?: JSONObject.NULL,
+                        )
+                        .put(
+                            "writtenAt",
+                            result.writtenAt.toString(),
+                        ),
+                )
+            } catch (_: HealthConnectWritePermissionException) {
+                nativeBridge.emitError(
+                    requestId =
+                        pendingWrite.requestId,
+                    code = "PERMISSION_DENIED",
+                    message =
+                        "Health Connect weight-write permission was not granted.",
+                )
+            } catch (_: IllegalArgumentException) {
+                nativeBridge.emitError(
+                    requestId =
+                        pendingWrite.requestId,
+                    code = "INVALID_WEIGHT_PAYLOAD",
+                    message =
+                        "The weight-write payload was invalid.",
+                )
+            } catch (_: Exception) {
+                nativeBridge.emitError(
+                    requestId =
+                        pendingWrite.requestId,
+                    code = "WRITE_FAILED",
+                    message =
+                        "Health Connect could not save the weight record.",
+                )
+            }
+        }
+    }
+
+    private fun handleHealthConnectWriteExercise(
+        requestId: String,
+        payload: JSONObject,
+    ) {
+        try {
+            val pendingWrite =
+                PendingExerciseWrite(
+                    requestId = requestId,
+                    startTime =
+                        Instant.parse(
+                            payload.getString(
+                                "startTime",
+                            ),
+                        ),
+                    endTime =
+                        Instant.parse(
+                            payload.getString(
+                                "endTime",
+                            ),
+                        ),
+                    exerciseType =
+                        payload.getInt(
+                            "exerciseType",
+                        ),
+                    title =
+                        payload.getString(
+                            "title",
+                        ),
+                    notes =
+                        payload
+                            .optString(
+                                "notes",
+                            )
+                            .takeIf {
+                                it.isNotBlank()
+                            },
+                    clientRecordId =
+                        payload.getString(
+                            "clientRecordId",
+                        ),
+                    clientRecordVersion =
+                        payload.optLong(
+                            "clientRecordVersion",
+                            1L,
+                        ),
+                )
+
+            validatePendingExerciseWrite(
+                pendingWrite,
+            )
+
+            AlertDialog.Builder(this)
+                .setTitle(
+                    R.string
+                        .health_connect_exercise_confirmation_title,
+                )
+                .setMessage(
+                    R.string
+                        .health_connect_exercise_confirmation_message,
+                )
+                .setNegativeButton(
+                    R.string.health_connect_write_cancel,
+                ) { _, _ ->
+                    nativeBridge.emitSuccess(
+                        requestId = requestId,
+                        data = JSONObject()
+                            .put("written", false)
+                            .put("cancelled", true),
+                    )
+                }
+                .setPositiveButton(
+                    R.string.health_connect_write_confirm,
+                ) { _, _ ->
+                    beginConfirmedExerciseWrite(
+                        pendingWrite,
+                    )
+                }
+                .setOnCancelListener {
+                    nativeBridge.emitSuccess(
+                        requestId = requestId,
+                        data = JSONObject()
+                            .put("written", false)
+                            .put("cancelled", true),
+                    )
+                }
+                .show()
+        } catch (_: Exception) {
+            nativeBridge.emitError(
+                requestId = requestId,
+                code = "INVALID_EXERCISE_PAYLOAD",
+                message =
+                    "Provide valid exercise times, type, title, clientRecordId, and version.",
+            )
+        }
+    }
+
+    private fun validatePendingExerciseWrite(
+        pendingWrite: PendingExerciseWrite,
+    ) {
+        require(
+            pendingWrite.startTime
+                .isBefore(
+                    pendingWrite.endTime,
+                ),
+        )
+
+        val duration =
+            java.time.Duration.between(
+                pendingWrite.startTime,
+                pendingWrite.endTime,
+            )
+
+        require(
+            !duration.isNegative &&
+                !duration.isZero &&
+                duration <=
+                    HealthConnectManager
+                        .MAX_EXERCISE_DURATION,
+        )
+
+        require(
+            pendingWrite.exerciseType in
+                HealthConnectManager
+                    .SUPPORTED_EXERCISE_TYPES,
+        )
+
+        require(
+            pendingWrite.title.isNotBlank(),
+        )
+
+        require(
+            pendingWrite.title.length <=
+                HealthConnectManager
+                    .MAX_EXERCISE_TITLE_LENGTH,
+        )
+
+        require(
+            pendingWrite.notes == null ||
+                pendingWrite.notes.length <=
+                    HealthConnectManager
+                        .MAX_EXERCISE_NOTES_LENGTH,
+        )
+
+        require(
+            pendingWrite.clientRecordId
+                .isNotBlank(),
+        )
+
+        require(
+            pendingWrite.clientRecordId.length <=
+                HealthConnectManager
+                    .MAX_CLIENT_RECORD_ID_LENGTH,
+        )
+
+        require(
+            pendingWrite.clientRecordVersion >= 1L,
+        )
+    }
+
+    private fun beginConfirmedExerciseWrite(
+        pendingWrite: PendingExerciseWrite,
+    ) {
+        lifecycleScope.launch {
+            when (healthConnectManager.status()) {
+                HealthConnectStatus.AVAILABLE -> {
+                    if (
+                        healthConnectManager
+                            .hasExerciseWritePermission()
+                    ) {
+                        performConfirmedExerciseWrite(
+                            pendingWrite,
+                        )
+                    } else {
+                        pendingExerciseWrite =
+                            pendingWrite
+
+                        healthConnectWritePermissionLauncher
+                            .launch(
+                                setOf(
+                                    HealthPermission
+                                        .getWritePermission(
+                                            ExerciseSessionRecord::class,
+                                        ),
+                                ),
+                            )
+                    }
+                }
+
+                HealthConnectStatus
+                    .PROVIDER_UPDATE_REQUIRED ->
+                    nativeBridge.emitError(
+                        requestId =
+                            pendingWrite.requestId,
+                        code =
+                            "PROVIDER_UPDATE_REQUIRED",
+                        message =
+                            "Health Connect must be installed or updated.",
+                    )
+
+                HealthConnectStatus.UNAVAILABLE ->
+                    nativeBridge.emitError(
+                        requestId =
+                            pendingWrite.requestId,
+                        code =
+                            "HEALTH_CONNECT_UNAVAILABLE",
+                        message =
+                            "Health Connect is unavailable on this device.",
+                    )
+            }
+        }
+    }
+
+    private fun performConfirmedExerciseWrite(
+        pendingWrite: PendingExerciseWrite,
+    ) {
+        pendingExerciseWrite = null
+
+        lifecycleScope.launch {
+            try {
+                val result =
+                    healthConnectManager
+                        .writeExercise(
+                            startTime =
+                                pendingWrite.startTime,
+                            endTime =
+                                pendingWrite.endTime,
+                            exerciseType =
+                                pendingWrite.exerciseType,
+                            title =
+                                pendingWrite.title,
+                            notes =
+                                pendingWrite.notes,
+                            clientRecordId =
+                                pendingWrite.clientRecordId,
+                            clientRecordVersion =
+                                pendingWrite.clientRecordVersion,
+                        )
+
+                nativeBridge.emitSuccess(
+                    requestId =
+                        pendingWrite.requestId,
+                    data = JSONObject()
+                        .put("written", true)
+                        .put(
+                            "clientRecordId",
+                            result.clientRecordId,
+                        )
+                        .put(
+                            "clientRecordVersion",
+                            result.clientRecordVersion,
+                        )
+                        .put(
+                            "recordId",
+                            result.recordId
+                                ?: JSONObject.NULL,
+                        )
+                        .put(
+                            "writtenAt",
+                            result.writtenAt
+                                .toString(),
+                        ),
+                )
+            } catch (_: HealthConnectWritePermissionException) {
+                nativeBridge.emitError(
+                    requestId =
+                        pendingWrite.requestId,
+                    code = "PERMISSION_DENIED",
+                    message =
+                        "Health Connect exercise-write permission was not granted.",
+                )
+            } catch (_: IllegalArgumentException) {
+                nativeBridge.emitError(
+                    requestId =
+                        pendingWrite.requestId,
+                    code =
+                        "INVALID_EXERCISE_PAYLOAD",
+                    message =
+                        "The exercise-write payload was invalid.",
+                )
+            } catch (_: Exception) {
+                nativeBridge.emitError(
+                    requestId =
+                        pendingWrite.requestId,
+                    code = "WRITE_FAILED",
+                    message =
+                        "Health Connect could not save the exercise session.",
+                )
+            }
+        }
+    }
+
     private fun loadHealthSprint() {
         showLoading()
         binding.healthsprintWebView.loadUrl(
@@ -504,3 +1126,22 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 }
+
+private data class PendingWeightWrite(
+    val requestId: String,
+    val weightPounds: Double,
+    val timestamp: Instant,
+    val clientRecordId: String,
+    val clientRecordVersion: Long,
+)
+
+private data class PendingExerciseWrite(
+    val requestId: String,
+    val startTime: Instant,
+    val endTime: Instant,
+    val exerciseType: Int,
+    val title: String,
+    val notes: String?,
+    val clientRecordId: String,
+    val clientRecordVersion: Long,
+)
