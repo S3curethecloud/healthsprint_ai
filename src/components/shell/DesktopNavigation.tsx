@@ -1,36 +1,42 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const navigationItems = [
   {
     targetId: "dashboard",
     label: "Today",
+    description: "Daily overview",
     icon: "◉",
   },
   {
     targetId: "meals",
     label: "Meals",
+    description: "Nutrition plan",
     icon: "▤",
   },
   {
     targetId: "activity",
     label: "Activity",
+    description: "Movement and water",
     icon: "↗",
   },
   {
     targetId: "progress",
     label: "Progress",
+    description: "45-day journey",
     icon: "▥",
   },
 ];
 
-const USER_SELECTION_LOCK_MS = 700;
+const USER_SELECTION_LOCK_MS = 900;
 
-export default function MobileNavigation() {
+export default function DesktopNavigation() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const userSelectionLocked = useRef(false);
   const selectionLockTimeout = useRef<number | null>(null);
+  const highlightTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     function updateActiveSection() {
@@ -38,7 +44,7 @@ export default function MobileNavigation() {
         return;
       }
 
-      const navigationLine = 170;
+      const navigationLine = 190;
 
       const sections = navigationItems
         .map((item) => {
@@ -75,8 +81,10 @@ export default function MobileNavigation() {
         return;
       }
 
-      if (sections[0]) {
-        setActiveSection(sections[0].targetId);
+      const nearestUpcomingSection = sections[0];
+
+      if (nearestUpcomingSection) {
+        setActiveSection(nearestUpcomingSection.targetId);
       }
     }
 
@@ -95,8 +103,30 @@ export default function MobileNavigation() {
       if (selectionLockTimeout.current !== null) {
         window.clearTimeout(selectionLockTimeout.current);
       }
+
+      if (highlightTimeout.current !== null) {
+        window.clearTimeout(highlightTimeout.current);
+      }
     };
   }, []);
+
+  function highlightTarget(target: HTMLElement) {
+    document
+      .querySelectorAll(".navigation-target-highlight")
+      .forEach((element) => {
+        element.classList.remove("navigation-target-highlight");
+      });
+
+    target.classList.add("navigation-target-highlight");
+
+    if (highlightTimeout.current !== null) {
+      window.clearTimeout(highlightTimeout.current);
+    }
+
+    highlightTimeout.current = window.setTimeout(() => {
+      target.classList.remove("navigation-target-highlight");
+    }, 1100);
+  }
 
   function navigateToSection(targetId: string) {
     setActiveSection(targetId);
@@ -125,7 +155,9 @@ export default function MobileNavigation() {
       return;
     }
 
-    const navigationOffset = 92;
+    target.setAttribute("tabindex", "-1");
+
+    const navigationOffset = 104;
     const targetTop =
       target.getBoundingClientRect().top +
       window.scrollY -
@@ -135,27 +167,72 @@ export default function MobileNavigation() {
       top: Math.max(0, targetTop),
       behavior: "smooth",
     });
+
+    highlightTarget(target);
+
+    window.setTimeout(() => {
+      target.focus({
+        preventScroll: true,
+      });
+    }, 350);
   }
 
   return (
-    <nav className="mobile-navigation" aria-label="Primary navigation">
-      {navigationItems.map((item) => {
-        const isActive = activeSection === item.targetId;
+    <aside
+      className="desktop-navigation"
+      aria-label="Application navigation"
+    >
+      <div className="desktop-brand">
+        <Image
+          src="/healthsprint-icon-192.png"
+          alt=""
+          width={42}
+          height={42}
+          priority
+        />
 
-        return (
-          <button
-            type="button"
-            className={isActive ? "active" : ""}
-            aria-current={isActive ? "page" : undefined}
-            aria-label={`Go to ${item.label}`}
-            onClick={() => navigateToSection(item.targetId)}
-            key={item.targetId}
-          >
-            <span aria-hidden="true">{item.icon}</span>
-            <small>{item.label}</small>
-          </button>
-        );
-      })}
-    </nav>
+        <div>
+          <strong>HealthSprint AI</strong>
+          <small>Nutrition coach</small>
+        </div>
+      </div>
+
+      <nav aria-label="Dashboard sections">
+        {navigationItems.map((item) => {
+          const isActive = activeSection === item.targetId;
+
+          return (
+            <button
+              type="button"
+              className={isActive ? "active" : ""}
+              aria-current={isActive ? "page" : undefined}
+              onClick={() => navigateToSection(item.targetId)}
+              key={item.targetId}
+            >
+              <span
+                className="desktop-nav-icon"
+                aria-hidden="true"
+              >
+                {item.icon}
+              </span>
+
+              <span>
+                <strong>{item.label}</strong>
+                <small>{item.description}</small>
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="desktop-navigation-footer">
+        <span className="status-indicator" aria-hidden="true" />
+
+        <div>
+          <strong>Local-first mode</strong>
+          <small>Progress saved on this device</small>
+        </div>
+      </div>
+    </aside>
   );
 }

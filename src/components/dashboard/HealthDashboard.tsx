@@ -2,7 +2,10 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import DailyOverview from "@/components/dashboard/DailyOverview";
 import MobileNavigation from "@/components/navigation/MobileNavigation";
+import ApplicationTopBar from "@/components/shell/ApplicationTopBar";
+import DesktopNavigation from "@/components/shell/DesktopNavigation";
 import { dayOneMeals, dayOneWorkout } from "@/data/day-one-plan";
 import type {
   HealthSprintState,
@@ -220,8 +223,14 @@ export default function HealthDashboard() {
   }
 
   return (
-    <main className="app-shell">
-      <header className="hero">
+    <div className="platform-shell">
+      <DesktopNavigation />
+
+      <div className="platform-workspace">
+        <ApplicationTopBar currentDay={state.currentDay} />
+
+        <main className="app-shell" id="dashboard">
+          <header className="hero">
         <div>
           <p className="eyebrow">45-Day Nutrition and Fitness Coach</p>
           <h1>HealthSprint AI</h1>
@@ -231,11 +240,6 @@ export default function HealthDashboard() {
           </p>
         </div>
 
-        <div className="day-badge">
-          <span>Program day</span>
-          <strong>{state.currentDay}</strong>
-          <small>of 45</small>
-        </div>
       </header>
 
       <section className="mobile-daily-summary" aria-label="Daily calorie summary">
@@ -257,85 +261,35 @@ export default function HealthDashboard() {
         </div>
       </section>
 
-      <section className="progress-card" id="progress">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">Program progress</p>
-            <h2>Day {state.currentDay} of 45</h2>
-          </div>
+      <DailyOverview
+        currentDay={state.currentDay}
+        calorieTarget={state.calorieTarget}
+        caloriesConsumed={round(totals.calories)}
+        caloriesRemaining={round(caloriesRemaining)}
+        calorieProgress={calorieProgress}
+        programProgress={programProgress}
+        protein={round(totals.protein)}
+        carbohydrates={round(totals.carbohydrates)}
+        fat={round(totals.fat)}
+        onCurrentDayChange={(currentDay) =>
+          setState((current) => ({
+            ...current,
+            currentDay,
+          }))
+        }
+      />
 
-          <label className="compact-field">
-            Current day
-            <input
-              type="number"
-              min="1"
-              max="45"
-              value={state.currentDay}
-              onChange={(event) =>
-                setState((current) => ({
-                  ...current,
-                  currentDay: Math.min(
-                    45,
-                    Math.max(1, Number(event.target.value) || 1),
-                  ),
-                }))
-              }
-            />
-          </label>
+      <div className="workspace-section-heading">
+        <div>
+          <p className="eyebrow">Daily workspace</p>
+          <h2>Log nutrition and movement</h2>
         </div>
 
-        <div className="progress-track">
-          <div
-            className="progress-fill"
-            style={{ width: `${programProgress}%` }}
-          />
-        </div>
-      </section>
-
-      <section className="metric-grid">
-        <article className="metric-card featured">
-          <span>Calories consumed</span>
-          <strong>{round(totals.calories)}</strong>
-          <small>of {state.calorieTarget} kcal</small>
-
-          <div className="progress-track">
-            <div
-              className="progress-fill"
-              style={{ width: `${calorieProgress}%` }}
-            />
-          </div>
-        </article>
-
-        <article className="metric-card">
-          <span>Calories remaining</span>
-          <strong className={caloriesRemaining < 0 ? "danger" : ""}>
-            {round(caloriesRemaining)}
-          </strong>
-          <small>
-            {caloriesRemaining >= 0
-              ? "Available today"
-              : "Above today's target"}
-          </small>
-        </article>
-
-        <article className="metric-card">
-          <span>Protein</span>
-          <strong>{round(totals.protein)} g</strong>
-          <small>Muscle-supporting intake</small>
-        </article>
-
-        <article className="metric-card">
-          <span>Carbohydrates</span>
-          <strong>{round(totals.carbohydrates)} g</strong>
-          <small>Daily fuel</small>
-        </article>
-
-        <article className="metric-card">
-          <span>Fat</span>
-          <strong>{round(totals.fat)} g</strong>
-          <small>Daily total</small>
-        </article>
-      </section>
+        <p>
+          Complete today&apos;s meal plan and record activity,
+          hydration, steps, and weight.
+        </p>
+      </div>
 
       <section className="content-grid">
         <div className="panel meal-panel" id="meals">
@@ -718,7 +672,9 @@ export default function HealthDashboard() {
         </button>
       </section>
 
-      <MobileNavigation />
-    </main>
+          <MobileNavigation />
+        </main>
+      </div>
+    </div>
   );
 }
