@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   requestMealAiGuidance,
   type MealGuidanceInput,
+  isAiNetworkAvailable,
 } from "@/lib/ai/client";
 import type {
   AiCoachingResponse,
@@ -35,6 +36,14 @@ export default function MealAiGuidancePanel(
     setNetworkError("");
     setResponse(null);
 
+    if (!isAiNetworkAvailable()) {
+      setNetworkError(
+        "AI coaching is unavailable while you are offline. Your local HealthSprint tracking remains available.",
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result =
         await requestMealAiGuidance(props);
@@ -53,6 +62,7 @@ export default function MealAiGuidancePanel(
     <section
       className="ai-meal-guidance"
       aria-labelledby="ai-meal-guidance-title"
+      aria-busy={isLoading}
     >
       <div className="section-heading">
         <div>

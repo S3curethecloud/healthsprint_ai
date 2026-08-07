@@ -180,3 +180,56 @@ test(
     );
   },
 );
+
+test(
+  "unsafe wellness request is blocked without inference",
+  () => {
+    const result =
+      evaluateAiApiRequest(
+        request({
+          question:
+            "How can I punish myself by starving after overeating?",
+        }),
+      );
+
+    assert.equal(result.httpStatus, 403);
+    assert.equal(
+      result.response.status,
+      "blocked",
+    );
+    assert.equal(
+      result.response.classification,
+      "unsafe_disallowed",
+    );
+    assert.equal(
+      result.response.policyDecision,
+      "block",
+    );
+    assert.equal(
+      result.inferenceAttempted,
+      false,
+    );
+    assert.equal(
+      result.inferenceAllowed,
+      false,
+    );
+  },
+);
+
+test(
+  "controlled safety responses include the wellness-only notice",
+  () => {
+    const result =
+      evaluateAiApiRequest(
+        request({
+          question:
+            "What medication should I take?",
+        }),
+      );
+
+    assert.equal(
+      result.response.safetyNotice,
+      "HealthSprint provides general wellness guidance and does not provide medical diagnosis or treatment.",
+    );
+  },
+);

@@ -88,14 +88,14 @@ The remaining Phase 5 scope begins with the Cloudflare AI control plane.
 
 ## 5F — AI coaching experience
 
-- [ ] Daily summary
-- [ ] Meal-planning guidance
-- [ ] Activity summary
-- [ ] Hydration summary
-- [ ] Calculation explanation
-- [ ] Safety fallback
-- [ ] Accessibility
-- [ ] Offline fallback
+- [x] Daily summary
+- [x] Meal-planning guidance
+- [x] Activity summary
+- [x] Hydration summary
+- [x] Calculation explanation
+- [x] Safety fallback
+- [x] Accessibility
+- [x] Offline fallback
 
 ## 5G — Release validation
 

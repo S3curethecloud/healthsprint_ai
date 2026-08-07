@@ -208,3 +208,14 @@ export async function requestCalculationAiExplanation(
 
   return (await response.json()) as AiCoachingResponse;
 }
+
+export function isAiNetworkAvailable(): boolean {
+  if (
+    typeof navigator !== "undefined" &&
+    navigator.onLine === false
+  ) {
+    return false;
+  }
+
+  return true;
+}

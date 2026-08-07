@@ -18,7 +18,7 @@ const MEDICAL_PATTERNS = [
 ];
 
 const UNSAFE_PATTERNS = [
-  /\bstarve\b/i,
+  /\bstarv(e|ed|ing)\b/i,
   /\bstop eating\b/i,
   /\beat nothing\b/i,
   /\bextreme calorie restriction\b/i,
