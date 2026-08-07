@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import DailyAiSummaryPanel from "@/components/ai/DailyAiSummaryPanel";
 import DailyOverview from "@/components/dashboard/DailyOverview";
 import HealthConnectConnectionPanel from "@/components/health-connect/HealthConnectConnectionPanel";
 import HealthConnectSummaryPanel from "@/components/health-connect/HealthConnectSummaryPanel";
@@ -317,6 +318,23 @@ export default function HealthDashboard() {
             ...current,
             currentDay,
           }))
+        }
+      />
+
+      <DailyAiSummaryPanel
+        calorieTarget={state.calorieTarget}
+        caloriesConsumed={round(totals.calories)}
+        proteinGrams={round(totals.protein)}
+        carbohydrateGrams={round(
+          totals.carbohydrates,
+        )}
+        fatGrams={round(totals.fat)}
+        hydrationOunces={
+          state.metrics.waterOunces
+        }
+        steps={state.metrics.steps}
+        latestWeightPounds={
+          state.metrics.weight
         }
       />
 
