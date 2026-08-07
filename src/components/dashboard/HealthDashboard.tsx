@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import DailyAiSummaryPanel from "@/components/ai/DailyAiSummaryPanel";
+import MealAiGuidancePanel from "@/components/ai/MealAiGuidancePanel";
 import DailyOverview from "@/components/dashboard/DailyOverview";
 import HealthConnectConnectionPanel from "@/components/health-connect/HealthConnectConnectionPanel";
 import HealthConnectSummaryPanel from "@/components/health-connect/HealthConnectSummaryPanel";
@@ -390,6 +391,16 @@ export default function HealthDashboard() {
             estimates and should be refined using package labels or a
             verified nutrition source.
           </p>
+
+          <MealAiGuidancePanel
+            calorieTarget={state.calorieTarget}
+            caloriesConsumed={round(totals.calories)}
+            proteinGrams={round(totals.protein)}
+            carbohydrateGrams={round(
+              totals.carbohydrates,
+            )}
+            fatGrams={round(totals.fat)}
+          />
 
           <div className="meal-groups">
             {mealTypes.map((mealType) => {
