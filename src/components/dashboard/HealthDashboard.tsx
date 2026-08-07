@@ -2,6 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
+import ActivityAiGuidancePanel from "@/components/ai/ActivityAiGuidancePanel";
 import DailyAiSummaryPanel from "@/components/ai/DailyAiSummaryPanel";
 import MealAiGuidancePanel from "@/components/ai/MealAiGuidancePanel";
 import DailyOverview from "@/components/dashboard/DailyOverview";
@@ -547,6 +548,10 @@ export default function HealthDashboard() {
                 style={{ width: `${stepProgress}%` }}
               />
             </div>
+
+            <ActivityAiGuidancePanel
+              steps={state.metrics.steps}
+            />
           </section>
 
           <section className="panel">
