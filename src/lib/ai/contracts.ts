@@ -88,6 +88,17 @@ export interface AiCoachingControlledResponse {
   modelMetadata?: AiModelMetadata;
 }
 
+export interface AiCoachingUnavailableResponse {
+  version: typeof AI_CONTRACT_VERSION;
+  requestId: string;
+  status: "unavailable";
+  classification: "wellness_allowed";
+  policyDecision: "allow";
+  message: string;
+  safetyNotice: string;
+}
+
 export type AiCoachingResponse =
   | AiCoachingSuccessResponse
-  | AiCoachingControlledResponse;
+  | AiCoachingControlledResponse
+  | AiCoachingUnavailableResponse;
