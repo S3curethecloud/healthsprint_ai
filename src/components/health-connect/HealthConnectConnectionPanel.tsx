@@ -40,6 +40,8 @@ export default function HealthConnectConnectionPanel() {
   const [actionMessage, setActionMessage] = useState("");
 
   const loadStatus = useCallback(async () => {
+    setActionMessage("");
+
     if (!healthSprintNative.isAvailable()) {
       setPanelState({ phase: "browser" });
       return;
