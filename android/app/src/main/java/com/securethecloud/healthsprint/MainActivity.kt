@@ -263,18 +263,22 @@ class MainActivity : AppCompatActivity() {
                 onHealthConnectWriteWeight = {
                     requestId,
                     payload ->
-                    handleHealthConnectWriteWeight(
-                        requestId,
-                        payload,
-                    )
+                    runOnUiThread {
+                        handleHealthConnectWriteWeight(
+                            requestId,
+                            payload,
+                        )
+                    }
                 },
                 onHealthConnectWriteExercise = {
                     requestId,
                     payload ->
-                    handleHealthConnectWriteExercise(
-                        requestId,
-                        payload,
-                    )
+                    runOnUiThread {
+                        handleHealthConnectWriteExercise(
+                            requestId,
+                            payload,
+                        )
+                    }
                 },
             )
 
