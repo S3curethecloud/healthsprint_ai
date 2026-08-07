@@ -136,3 +136,35 @@ export async function requestActivityAiGuidance(
 
   return (await response.json()) as AiCoachingResponse;
 }
+
+export interface HydrationGuidanceInput {
+  hydrationOunces: number;
+}
+
+export async function requestHydrationAiGuidance(
+  input: HydrationGuidanceInput,
+): Promise<AiCoachingResponse> {
+  const request: AiCoachingRequest = {
+    version: AI_CONTRACT_VERSION,
+    requestId: crypto.randomUUID(),
+    intent: "hydration_guidance",
+    context: {
+      hydrationOunces:
+        input.hydrationOunces,
+    },
+  };
+
+  const response = await fetch(
+    "/api/ai/coaching",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify(request),
+    },
+  );
+
+  return (await response.json()) as AiCoachingResponse;
+}
