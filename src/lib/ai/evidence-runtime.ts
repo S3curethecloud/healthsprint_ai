@@ -22,7 +22,10 @@ export interface CreateAiEvidenceInput {
     | "redirected"
     | "unavailable"
     | "invalid";
+  model?: string;
   latencyMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 export function createAiEvidence(
@@ -40,7 +43,10 @@ export function createAiEvidence(
       input.promptInjectionDetected,
     inferenceAttempted:
       input.inferenceAttempted,
+    model: input.model,
     latencyMs: input.latencyMs,
+    inputTokens: input.inputTokens,
+    outputTokens: input.outputTokens,
     responseStatus: input.responseStatus,
   });
 }

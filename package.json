@@ -11,7 +11,9 @@
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "test:ai-policy": "node --import=tsx --test src/lib/ai/runtime-policy.test.ts",
-    "test:ai-api": "node --import=tsx --test src/lib/ai/api.test.ts"
+    "test:ai-api": "node --import=tsx --test src/lib/ai/api.test.ts",
+    "test:ai-output": "node --import=tsx --test src/lib/ai/structured-output.test.ts",
+    "test:ai-workers": "node --import=tsx --test src/lib/ai/workers-ai.test.ts"
   },
   "dependencies": {
     "@opennextjs/cloudflare": "^1.20.2",

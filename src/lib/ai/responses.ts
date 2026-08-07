@@ -5,7 +5,7 @@ import {
   type AiPolicyDecision,
 } from "./contracts";
 
-const GENERAL_SAFETY_NOTICE =
+export const GENERAL_SAFETY_NOTICE =
   "HealthSprint provides general wellness guidance and does not provide medical diagnosis or treatment.";
 
 export function createControlledAiResponse(input: {
@@ -82,6 +82,8 @@ export function createControlledAiResponse(input: {
 
 export function createUnavailableAiResponse(
   requestId: string,
+  message =
+    "AI coaching is not available yet. Your request passed HealthSprint safety policy, but model inference is not enabled.",
 ): import("./contracts").AiCoachingUnavailableResponse {
   return {
     version: AI_CONTRACT_VERSION,
@@ -89,8 +91,7 @@ export function createUnavailableAiResponse(
     status: "unavailable",
     classification: "wellness_allowed",
     policyDecision: "allow",
-    message:
-      "AI coaching is not available yet. Your request passed HealthSprint safety policy, but model inference is not enabled.",
+    message,
     safetyNotice: GENERAL_SAFETY_NOTICE,
   };
 }
