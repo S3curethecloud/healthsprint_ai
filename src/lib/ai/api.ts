@@ -12,7 +12,8 @@ export interface AiApiEvaluation {
   httpStatus: number;
   response: AiCoachingResponse;
   evidenceClassification: AiClassification;
-  inferenceAttempted: false;
+  inferenceAttempted: boolean;
+  inferenceAllowed: boolean;
   promptInjectionDetected: boolean;
 }
 
@@ -56,6 +57,7 @@ export function evaluateAiApiRequest(
           }),
         evidenceClassification: "invalid",
         inferenceAttempted: false,
+        inferenceAllowed: false,
         promptInjectionDetected:
           result.promptInjectionDetected,
       };
@@ -68,6 +70,7 @@ export function evaluateAiApiRequest(
       evidenceClassification:
         result.classification,
       inferenceAttempted: false,
+      inferenceAllowed: true,
       promptInjectionDetected:
         result.promptInjectionDetected,
     };
@@ -86,6 +89,7 @@ export function evaluateAiApiRequest(
         }),
       evidenceClassification: classification,
       inferenceAttempted: false,
+      inferenceAllowed: false,
       promptInjectionDetected: false,
     };
   }
@@ -105,6 +109,7 @@ export function evaluateAiApiRequest(
         }),
       evidenceClassification: classification,
       inferenceAttempted: false,
+      inferenceAllowed: false,
       promptInjectionDetected:
         result.promptInjectionDetected,
     };
@@ -120,6 +125,7 @@ export function evaluateAiApiRequest(
       }),
     evidenceClassification: classification,
     inferenceAttempted: false,
+    inferenceAllowed: false,
     promptInjectionDetected: false,
   };
 }
