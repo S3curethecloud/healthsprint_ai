@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   requestDailyAiSummary,
   type DailySummaryInput,
+  isAiNetworkAvailable,
 } from "@/lib/ai/client";
 import type {
   AiCoachingResponse,
@@ -35,6 +36,14 @@ export default function DailyAiSummaryPanel(
     setNetworkError("");
     setResponse(null);
 
+    if (!isAiNetworkAvailable()) {
+      setNetworkError(
+        "AI coaching is unavailable while you are offline. Your local HealthSprint tracking remains available.",
+      );
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result =
         await requestDailyAiSummary(props);
@@ -53,6 +62,7 @@ export default function DailyAiSummaryPanel(
     <section
       className="panel ai-summary-panel"
       aria-labelledby="ai-daily-summary-title"
+      aria-busy={isLoading}
     >
       <div className="section-heading">
         <div>
