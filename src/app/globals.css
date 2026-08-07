@@ -1330,16 +1330,34 @@ input::placeholder {
   text-align: right;
 }
 
-@media (min-width: 1100px) {
+@media (min-width: 1180px) {
   .content-grid {
-    grid-template-columns: minmax(0, 1.55fr) minmax(340px, 0.72fr);
+    grid-template-columns:
+      minmax(0, 1.45fr)
+      minmax(390px, 0.85fr);
     align-items: start;
-    gap: 22px;
+    gap: 24px;
   }
 
   .side-column {
     position: sticky;
     top: 100px;
+  }
+}
+
+@media (min-width: 980px) and (max-width: 1179px) {
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .side-column {
+    position: static;
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
+  }
+
+  .side-column > * {
+    min-width: 0;
   }
 }
 
@@ -2353,4 +2371,27 @@ input::placeholder {
 .ai-hydration-guidance h3,
 .ai-calculation-explanation h3 {
   margin: 0;
+}
+
+
+.ai-meal-guidance .section-heading,
+.ai-activity-guidance .section-heading,
+.ai-hydration-guidance .section-heading,
+.ai-calculation-explanation .section-heading {
+  flex-wrap: wrap;
+}
+
+.ai-meal-guidance .primary-button,
+.ai-activity-guidance .primary-button,
+.ai-hydration-guidance .primary-button,
+.ai-calculation-explanation .primary-button {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+@media (max-width: 1179px) {
+  .ai-activity-guidance .primary-button,
+  .ai-hydration-guidance .primary-button {
+    width: 100%;
+  }
 }
