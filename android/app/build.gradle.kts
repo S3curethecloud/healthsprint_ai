@@ -37,7 +37,7 @@ android {
             buildConfigField(
                 "String",
                 "HEALTHSPRINT_BASE_URL",
-                "\"https://healthsprint-ai.theolagold.workers.dev\"",
+                "\"https://healthsprint.securethecloud.dev\"",
             )
 
             proguardFiles(

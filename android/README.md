@@ -37,5 +37,5 @@ Release URL
 
 The release build loads:
 
-https://healthsprint-ai.theolagold.workers.dev
+https://healthsprint.securethecloud.dev
 
