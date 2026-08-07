@@ -1,6 +1,8 @@
 const BRIDGE_VERSION = "1.0";
 const RESPONSE_EVENT = "healthsprint:native-response";
 const DEFAULT_TIMEOUT_MS = 15_000;
+const INTERACTIVE_WRITE_TIMEOUT_MS = 120_000;
+const INTERACTIVE_PERMISSION_TIMEOUT_MS = 120_000;
 
 export type NativeAction =
   | "app.version"
@@ -343,6 +345,8 @@ export const healthSprintNative = {
     Promise<HealthConnectPermissionsData> {
     return sendNativeRequest<HealthConnectPermissionsData>(
       "healthConnect.permissions",
+      {},
+      INTERACTIVE_PERMISSION_TIMEOUT_MS,
     );
   },
 
@@ -361,6 +365,7 @@ export const healthSprintNative = {
     return sendNativeRequest<HealthConnectWriteData>(
       "healthConnect.writeWeight",
       payload,
+      INTERACTIVE_WRITE_TIMEOUT_MS,
     );
   },
 
@@ -370,6 +375,7 @@ export const healthSprintNative = {
     return sendNativeRequest<HealthConnectWriteData>(
       "healthConnect.writeExercise",
       payload,
+      INTERACTIVE_WRITE_TIMEOUT_MS,
     );
   },
 };

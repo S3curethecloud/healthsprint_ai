@@ -37,17 +37,26 @@ export default function HealthConnectConnectionPanel() {
     useState<PanelState>({ phase: "loading" });
   const [isRequestingPermissions, setIsRequestingPermissions] =
     useState(false);
+  const [isRefreshingStatus, setIsRefreshingStatus] =
+    useState(false);
   const [actionMessage, setActionMessage] = useState("");
 
-  const loadStatus = useCallback(async () => {
-    if (!healthSprintNative.isAvailable()) {
-      setPanelState({ phase: "browser" });
-      return;
-    }
+  const loadStatus = useCallback(
+    async (showLoadingState = true) => {
+      setActionMessage("");
 
-    setPanelState({ phase: "loading" });
+      if (!healthSprintNative.isAvailable()) {
+        setPanelState({ phase: "browser" });
+        return;
+      }
 
-    try {
+      if (showLoadingState) {
+        setPanelState({ phase: "loading" });
+      } else {
+        setIsRefreshingStatus(true);
+      }
+
+      try {
       const status =
         await healthSprintNative.healthConnectStatus();
 
@@ -55,16 +64,20 @@ export default function HealthConnectConnectionPanel() {
         phase: "ready",
         status,
       });
-    } catch (error) {
-      setPanelState({
-        phase: "error",
-        message:
-          error instanceof Error
-            ? error.message
-            : "Health Connect status could not be loaded.",
-      });
-    }
-  }, []);
+      } catch (error) {
+        setPanelState({
+          phase: "error",
+          message:
+            error instanceof Error
+              ? error.message
+              : "Health Connect status could not be loaded.",
+        });
+      } finally {
+        setIsRefreshingStatus(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -88,7 +101,7 @@ export default function HealthConnectConnectionPanel() {
           : "Health Connect read access was not fully granted.",
       );
 
-      await loadStatus();
+      await loadStatus(false);
     } catch (error) {
       const message =
         error instanceof NativeBridgeError
@@ -172,7 +185,7 @@ export default function HealthConnectConnectionPanel() {
         <button
           type="button"
           className="secondary-button"
-          onClick={() => void loadStatus()}
+          onClick={() => void loadStatus(false)}
         >
           Try again
         </button>
@@ -245,7 +258,7 @@ export default function HealthConnectConnectionPanel() {
           <button
             type="button"
             className="primary-button"
-            disabled={isRequestingPermissions}
+            disabled={isRequestingPermissions || isRefreshingStatus}
             onClick={() => void requestReadPermissions()}
           >
             {isRequestingPermissions
@@ -257,10 +270,10 @@ export default function HealthConnectConnectionPanel() {
         <button
           type="button"
           className="secondary-button"
-          disabled={isRequestingPermissions}
-          onClick={() => void loadStatus()}
+          disabled={isRequestingPermissions || isRefreshingStatus}
+          onClick={() => void loadStatus(false)}
         >
-          Refresh status
+          {isRefreshingStatus ? "Refreshing..." : "Refresh status"}
         </button>
       </div>
 
