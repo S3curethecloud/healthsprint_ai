@@ -79,3 +79,18 @@ export function createControlledAiResponse(input: {
     safetyNotice: GENERAL_SAFETY_NOTICE,
   };
 }
+
+export function createUnavailableAiResponse(
+  requestId: string,
+): import("./contracts").AiCoachingUnavailableResponse {
+  return {
+    version: AI_CONTRACT_VERSION,
+    requestId,
+    status: "unavailable",
+    classification: "wellness_allowed",
+    policyDecision: "allow",
+    message:
+      "AI coaching is not available yet. Your request passed HealthSprint safety policy, but model inference is not enabled.",
+    safetyNotice: GENERAL_SAFETY_NOTICE,
+  };
+}

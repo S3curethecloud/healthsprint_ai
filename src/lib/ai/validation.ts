@@ -9,6 +9,14 @@ import {
 export const MAX_AI_REQUEST_ID_LENGTH = 128;
 export const MAX_AI_QUESTION_LENGTH = 2_000;
 
+const AI_REQUEST_KEYS = [
+  "version",
+  "requestId",
+  "intent",
+  "question",
+  "context",
+] as const;
+
 const CONTEXT_KEYS: readonly (keyof AiCoachingContext)[] = [
   "calorieTarget",
   "caloriesConsumed",
@@ -86,6 +94,18 @@ export function validateAiCoachingRequest(
       valid: false,
       reasons: ["request must be an object"],
     };
+  }
+
+  for (const key of Object.keys(input)) {
+    if (
+      !AI_REQUEST_KEYS.includes(
+        key as (typeof AI_REQUEST_KEYS)[number],
+      )
+    ) {
+      reasons.push(
+        `unsupported request field: ${key}`,
+      );
+    }
   }
 
   if (input.version !== AI_CONTRACT_VERSION) {
