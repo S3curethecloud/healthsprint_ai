@@ -98,3 +98,41 @@ export async function requestMealAiGuidance(
 
   return (await response.json()) as AiCoachingResponse;
 }
+
+export interface ActivityGuidanceInput {
+  steps: number;
+  activityMinutes?: number;
+}
+
+export async function requestActivityAiGuidance(
+  input: ActivityGuidanceInput,
+): Promise<AiCoachingResponse> {
+  const request: AiCoachingRequest = {
+    version: AI_CONTRACT_VERSION,
+    requestId: crypto.randomUUID(),
+    intent: "activity_guidance",
+    context: {
+      steps: input.steps,
+      ...(input.activityMinutes !== undefined
+        ? {
+            activityMinutes:
+              input.activityMinutes,
+          }
+        : {}),
+    },
+  };
+
+  const response = await fetch(
+    "/api/ai/coaching",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify(request),
+    },
+  );
+
+  return (await response.json()) as AiCoachingResponse;
+}
