@@ -58,3 +58,43 @@ export async function requestDailyAiSummary(
 
   return payload;
 }
+
+export interface MealGuidanceInput {
+  calorieTarget: number;
+  caloriesConsumed: number;
+  proteinGrams: number;
+  carbohydrateGrams: number;
+  fatGrams: number;
+}
+
+export async function requestMealAiGuidance(
+  input: MealGuidanceInput,
+): Promise<AiCoachingResponse> {
+  const request: AiCoachingRequest = {
+    version: AI_CONTRACT_VERSION,
+    requestId: crypto.randomUUID(),
+    intent: "meal_guidance",
+    context: {
+      calorieTarget: input.calorieTarget,
+      caloriesConsumed: input.caloriesConsumed,
+      proteinGrams: input.proteinGrams,
+      carbohydrateGrams:
+        input.carbohydrateGrams,
+      fatGrams: input.fatGrams,
+    },
+  };
+
+  const response = await fetch(
+    "/api/ai/coaching",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify(request),
+    },
+  );
+
+  return (await response.json()) as AiCoachingResponse;
+}

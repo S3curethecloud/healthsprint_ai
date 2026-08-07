@@ -2329,3 +2329,35 @@ input::placeholder {
 .ai-summary-safety {
   font-size: 0.88rem;
 }
+
+.ai-meal-guidance {
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-raised);
+}
+
+.ai-meal-guidance .section-heading {
+  align-items: center;
+}
+
+.ai-meal-guidance h3 {
+  margin: 0;
+}
+
+.ai-meal-guidance {
+  margin-bottom: 24px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface-raised);
+}
+
+.ai-meal-guidance .section-heading {
+  align-items: center;
+}
+
+.ai-meal-guidance h3 {
+  margin: 0;
+}
