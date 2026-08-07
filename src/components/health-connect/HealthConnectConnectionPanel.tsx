@@ -50,6 +50,9 @@ export default function HealthConnectConnectionPanel() {
         return;
       }
 
+      const refreshStartedAt =
+        showLoadingState ? null : performance.now();
+
       if (showLoadingState) {
         setPanelState({ phase: "loading" });
       } else {
@@ -73,6 +76,18 @@ export default function HealthConnectConnectionPanel() {
               : "Health Connect status could not be loaded.",
         });
       } finally {
+        if (refreshStartedAt !== null) {
+          const elapsedMs =
+            performance.now() - refreshStartedAt;
+          const remainingMs = 500 - elapsedMs;
+
+          if (remainingMs > 0) {
+            await new Promise<void>((resolve) => {
+              window.setTimeout(resolve, remainingMs);
+            });
+          }
+        }
+
         setIsRefreshingStatus(false);
       }
     },
