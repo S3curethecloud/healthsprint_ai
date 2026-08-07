@@ -85,10 +85,15 @@ export async function POST(request: Request) {
         getCloudflareContext();
 
       const run: WorkersAiRun =
-        async (model, runInput) =>
+        async (
+          model,
+          runInput,
+          options,
+        ) =>
           env.AI.run(
             model,
             runInput,
+            options,
           );
 
       const inference =

@@ -20,6 +20,9 @@ type WorkersAiMessage = {
   content: string;
 };
 
+export const AI_GATEWAY_ID =
+  "healthsprint-ai" as const;
+
 export interface WorkersAiRunInput {
   messages: WorkersAiMessage[];
   response_format: {
@@ -29,9 +32,18 @@ export interface WorkersAiRunInput {
   };
 }
 
+export interface WorkersAiGatewayOptions {
+  gateway: {
+    id: typeof AI_GATEWAY_ID;
+    collectLog: boolean;
+    skipCache: boolean;
+  };
+}
+
 export type WorkersAiRun = (
   model: typeof WORKERS_AI_MODEL,
   input: WorkersAiRunInput,
+  options: WorkersAiGatewayOptions,
 ) => Promise<unknown>;
 
 export interface WorkersAiInferenceResult {
@@ -116,6 +128,13 @@ export async function runWorkersAiCoaching(
           type: "json_schema",
           json_schema:
             AI_COACHING_RESPONSE_SCHEMA,
+        },
+      },
+      {
+        gateway: {
+          id: AI_GATEWAY_ID,
+          collectLog: false,
+          skipCache: true,
         },
       },
     );

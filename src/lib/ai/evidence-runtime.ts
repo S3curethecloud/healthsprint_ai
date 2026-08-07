@@ -22,6 +22,7 @@ export interface CreateAiEvidenceInput {
     | "redirected"
     | "unavailable"
     | "invalid";
+  gatewayId?: string;
   model?: string;
   latencyMs?: number;
   inputTokens?: number;
@@ -43,6 +44,7 @@ export function createAiEvidence(
       input.promptInjectionDetected,
     inferenceAttempted:
       input.inferenceAttempted,
+    gatewayId: input.gatewayId,
     model: input.model,
     latencyMs: input.latencyMs,
     inputTokens: input.inputTokens,

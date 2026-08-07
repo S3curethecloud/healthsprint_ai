@@ -200,3 +200,45 @@ test(
     );
   },
 );
+
+test(
+  "routes inference through the HealthSprint AI Gateway",
+  async () => {
+    let gatewayId = "";
+    let collectLog = false;
+    let skipCache = false;
+
+    const run: WorkersAiRun =
+      async (
+        _model,
+        _input,
+        options,
+      ) => {
+        gatewayId = options.gateway.id;
+        collectLog =
+          options.gateway.collectLog;
+        skipCache =
+          options.gateway.skipCache;
+
+        return validModelOutput();
+      };
+
+    await runWorkersAiCoaching(
+      run,
+      request(),
+    );
+
+    assert.equal(
+      gatewayId,
+      "healthsprint-ai",
+    );
+    assert.equal(
+      collectLog,
+      false,
+    );
+    assert.equal(
+      skipCache,
+      true,
+    );
+  },
+);
