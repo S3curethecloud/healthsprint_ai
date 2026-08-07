@@ -2331,7 +2331,8 @@ input::placeholder {
 }
 
 .ai-meal-guidance,
-.ai-activity-guidance {
+.ai-activity-guidance,
+.ai-hydration-guidance {
   margin-bottom: 24px;
   padding: 18px;
   border: 1px solid var(--border);
@@ -2340,11 +2341,13 @@ input::placeholder {
 }
 
 .ai-meal-guidance .section-heading,
-.ai-activity-guidance .section-heading {
+.ai-activity-guidance .section-heading,
+.ai-hydration-guidance .section-heading {
   align-items: center;
 }
 
 .ai-meal-guidance h3,
-.ai-activity-guidance h3 {
+.ai-activity-guidance h3,
+.ai-hydration-guidance h3 {
   margin: 0;
 }

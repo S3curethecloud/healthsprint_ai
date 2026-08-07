@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import ActivityAiGuidancePanel from "@/components/ai/ActivityAiGuidancePanel";
 import DailyAiSummaryPanel from "@/components/ai/DailyAiSummaryPanel";
+import HydrationAiGuidancePanel from "@/components/ai/HydrationAiGuidancePanel";
 import MealAiGuidancePanel from "@/components/ai/MealAiGuidancePanel";
 import DailyOverview from "@/components/dashboard/DailyOverview";
 import HealthConnectConnectionPanel from "@/components/health-connect/HealthConnectConnectionPanel";
@@ -564,6 +565,12 @@ export default function HealthDashboard() {
                 style={{ width: `${waterProgress}%` }}
               />
             </div>
+
+            <HydrationAiGuidancePanel
+              hydrationOunces={
+                state.metrics.waterOunces
+              }
+            />
 
             <div className="button-row">
               <button
