@@ -16,6 +16,7 @@ export interface AiDecisionEvidence {
   policyDecision: AiPolicyDecision;
   promptInjectionDetected: boolean;
   inferenceAttempted: boolean;
+  gatewayId?: string;
   model?: string;
   latencyMs?: number;
   inputTokens?: number;

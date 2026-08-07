@@ -76,15 +76,15 @@ The remaining Phase 5 scope begins with the Cloudflare AI control plane.
 
 ## 5E — Cloudflare AI control plane
 
-- [ ] Workers AI binding
-- [ ] AI request schema
-- [ ] Request classification
-- [ ] Prompt-injection detection
-- [ ] Wellness-only policy
-- [ ] Structured output validation
-- [ ] AI Gateway configuration
-- [ ] Rate and spend controls
-- [ ] Audit evidence
+- [x] Workers AI binding
+- [x] AI request schema
+- [x] Request classification
+- [x] Prompt-injection detection
+- [x] Wellness-only policy
+- [x] Structured output validation
+- [x] AI Gateway configuration
+- [x] Rate and spend controls
+- [x] Audit evidence
 
 ## 5F — AI coaching experience
 
