@@ -487,3 +487,110 @@ test(
     }
   },
 );
+
+test(
+  "sends only approved aggregate calculation explanation data",
+  async () => {
+    const originalFetch = globalThis.fetch;
+    let capturedBody = "";
+
+    globalThis.fetch = async (
+      _input,
+      init,
+    ) => {
+      capturedBody = String(init?.body ?? "");
+
+      const response: AiCoachingResponse = {
+        version: "1.0",
+        requestId: "calculation-response-request-id",
+        status: "success",
+        classification: "wellness_allowed",
+        policyDecision: "allow",
+        summary: "Calculation explanation",
+        observations: [],
+        suggestedActions: [],
+        safetyNotice: "General wellness guidance.",
+        modelMetadata: {
+          provider: "cloudflare-workers-ai",
+          model: "test-model",
+          inferenceAttempted: true,
+        },
+      };
+
+      return new Response(
+        JSON.stringify(response),
+        {
+          status: 200,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    };
+
+    try {
+      const {
+        requestCalculationAiExplanation,
+      } = await import("./client");
+
+      await requestCalculationAiExplanation({
+        calorieTarget: 2100,
+        caloriesConsumed: 1450,
+        proteinGrams: 120,
+        carbohydrateGrams: 155,
+        fatGrams: 48,
+      });
+
+      const body = JSON.parse(
+        capturedBody,
+      ) as Record<string, unknown>;
+
+      assert.equal(
+        body.intent,
+        "calculation_explanation",
+      );
+
+      assert.deepEqual(
+        body.context,
+        {
+          calorieTarget: 2100,
+          caloriesConsumed: 1450,
+          proteinGrams: 120,
+          carbohydrateGrams: 155,
+          fatGrams: 48,
+        },
+      );
+
+      assert.equal(
+        "question" in body,
+        false,
+      );
+      assert.equal(
+        "healthConnectRecords" in body,
+        false,
+      );
+      assert.equal(
+        "prompt" in body,
+        false,
+      );
+
+      const context =
+        body.context as Record<string, unknown>;
+
+      assert.equal(
+        "hydrationOunces" in context,
+        false,
+      );
+      assert.equal(
+        "steps" in context,
+        false,
+      );
+      assert.equal(
+        "latestWeightPounds" in context,
+        false,
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  },
+);

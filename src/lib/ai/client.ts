@@ -168,3 +168,43 @@ export async function requestHydrationAiGuidance(
 
   return (await response.json()) as AiCoachingResponse;
 }
+
+export interface CalculationExplanationInput {
+  calorieTarget: number;
+  caloriesConsumed: number;
+  proteinGrams: number;
+  carbohydrateGrams: number;
+  fatGrams: number;
+}
+
+export async function requestCalculationAiExplanation(
+  input: CalculationExplanationInput,
+): Promise<AiCoachingResponse> {
+  const request: AiCoachingRequest = {
+    version: AI_CONTRACT_VERSION,
+    requestId: crypto.randomUUID(),
+    intent: "calculation_explanation",
+    context: {
+      calorieTarget: input.calorieTarget,
+      caloriesConsumed: input.caloriesConsumed,
+      proteinGrams: input.proteinGrams,
+      carbohydrateGrams:
+        input.carbohydrateGrams,
+      fatGrams: input.fatGrams,
+    },
+  };
+
+  const response = await fetch(
+    "/api/ai/coaching",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify(request),
+    },
+  );
+
+  return (await response.json()) as AiCoachingResponse;
+}

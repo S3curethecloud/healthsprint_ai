@@ -3,6 +3,7 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
 
 import ActivityAiGuidancePanel from "@/components/ai/ActivityAiGuidancePanel";
+import CalculationAiExplanationPanel from "@/components/ai/CalculationAiExplanationPanel";
 import DailyAiSummaryPanel from "@/components/ai/DailyAiSummaryPanel";
 import HydrationAiGuidancePanel from "@/components/ai/HydrationAiGuidancePanel";
 import MealAiGuidancePanel from "@/components/ai/MealAiGuidancePanel";
@@ -322,6 +323,16 @@ export default function HealthDashboard() {
             currentDay,
           }))
         }
+      />
+
+      <CalculationAiExplanationPanel
+        calorieTarget={state.calorieTarget}
+        caloriesConsumed={round(totals.calories)}
+        proteinGrams={round(totals.protein)}
+        carbohydrateGrams={round(
+          totals.carbohydrates,
+        )}
+        fatGrams={round(totals.fat)}
       />
 
       <DailyAiSummaryPanel
